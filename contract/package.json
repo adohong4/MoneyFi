@@ -1,8 +1,54 @@
 {
-  "name": "hardhat-project",
+  "name": "moneyfi-hardhat",
+  "version": "1.0.0",
+  "license": "ISC",
+  "author": "MoneyFi",
+  "description": "MoneyFi project ported to Hardhat with Alchemy",
+  "dependencies": {
+    "@balancer-labs/v2-solidity-utils": "^4.0.0",
+    "@chainlink/contracts": "^1.4.0",
+    "@layerzerolabs/lz-evm-messagelib-v2": "^3.0.68",
+    "@layerzerolabs/lz-evm-oapp-v2": "^3.0.68",
+    "@layerzerolabs/lz-evm-protocol-v2": "^3.0.68",
+    "@openzeppelin/contracts": "^5.0.2",
+    "@openzeppelin/contracts-upgradeable": "^5.0.2",
+    "@pythnetwork/pyth-sdk-solidity": "^3.1.0",
+    "@stargatefinance/stg-evm-v2": "^1.5.0",
+    "@uniswap/v2-core": "^1.0.1",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "@uniswap/v3-core": "^1.0.1",
+    "@uniswap/v3-periphery": "^1.4.4",
+    "@uniswap/v3-sdk": "^3.25.2",
+    "solidity-bytes-utils": "^0.8.3"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
-    "dotenv": "^17.2.2",
-    "hardhat": "^2.26.3"
-  }
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-etherscan": "^3.1.8",
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.2",
+    "prettier": "^3.2.5",
+    "solhint": "^4.5.2"
+  },
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test",
+    "clean": "hardhat clean",
+    "lint": "npm run lint:sol && npm run prettier:check",
+    "lint:sol": "solhint 'contracts/**/*.sol' 'test/**/*.sol' 'scripts/**/*.sol'",
+    "prettier:check": "prettier --check '**/*.{json,md,yml}' --ignore-path .prettierignore",
+    "prettier:write": "prettier --write '**/*.{json,md,yml}' --ignore-path .prettierignore",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "verify:sepolia": "hardhat verify --network sepolia"
+  },
+  "keywords": [
+    "blockchain",
+    "ethereum",
+    "hardhat",
+    "smart-contracts",
+    "solidity",
+    "defi",
+    "cross-chain"
+  ]
 }
