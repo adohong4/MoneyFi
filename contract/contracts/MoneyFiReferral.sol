@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
-import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import { SignatureChecker } from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
-import { IMoneyFiReferral } from "../src/interfaces/IMoneyFiReferral.sol";
-import { SignatureUtils } from "./libraries/SignatureUtils.sol";
-import { DefaultAccessControlEnumerable } from "./security/DefaultAccessControlEnumerable.sol";
+import {IMoneyFiReferral} from "./interfaces/IMoneyFiReferral.sol";
+import {SignatureUtils} from "./libraries/SignatureUtils.sol";
+import {DefaultAccessControlEnumerable} from "./security/DefaultAccessControlEnumerable.sol";
 
 contract MoneyFiReferral is Pausable, ReentrancyGuard, DefaultAccessControlEnumerable, IMoneyFiReferral {
     using SafeERC20 for IERC20;
@@ -53,7 +53,8 @@ contract MoneyFiReferral is Pausable, ReentrancyGuard, DefaultAccessControlEnume
     /// @inheritdoc IMoneyFiReferral
     function claim(uint256 _amount, bytes memory _signature) external whenNotPaused nonReentrant {
         address sender = msg.sender;
-        bytes32 message = MessageHashUtils.toEthSignedMessageHash(keccak256(abi.encodePacked(signer, nonce++, sender, _amount)));
+        bytes32 message =
+            MessageHashUtils.toEthSignedMessageHash(keccak256(abi.encodePacked(signer, nonce++, sender, _amount)));
 
         //validate the signature was signed from the contract's signer
         if (!SignatureChecker.isValidSignatureNow(signer, message, _signature)) {
