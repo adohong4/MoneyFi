@@ -1,10 +1,11 @@
-require("@nomicfoundation/hardhat-toolbox");
-require("dotenv").config();
-require("@openzeppelin/hardhat-upgrades");
+import { HardhatUserConfig } from "hardhat/config";
+import "@nomicfoundation/hardhat-toolbox";
+import "dotenv/config";
+import "@openzeppelin/hardhat-upgrades";
 
 const { API_URL, PRIVATE_KEY, ETHERSCAN_API_KEY } = process.env;
 
-module.exports = {
+const config = {
   solidity: {
     version: "0.8.20",
     settings: {
@@ -28,3 +29,5 @@ module.exports = {
     apiKey: ETHERSCAN_API_KEY,
   },
 };
+
+export default config;
