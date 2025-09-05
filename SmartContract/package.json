@@ -1,0 +1,33 @@
+{
+  "name": "MoneyFiFund",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "dotenv": "^17.2.2",
+    "hardhat": "^2.26.3"
+  },
+  "dependencies": {
+    "@balancer-labs/v2-solidity-utils": "^4.0.0",
+    "@chainlink/contracts": "^1.4.0",
+    "@layerzerolabs/lz-evm-messagelib-v2": "^3.0.127",
+    "@layerzerolabs/lz-evm-oapp-v2": "^3.0.127",
+    "@layerzerolabs/lz-evm-protocol-v2": "^3.0.127",
+    "@openzeppelin/contracts": "^5.4.0",
+    "@openzeppelin/contracts-upgradeable": "^5.4.0",
+    "@pythnetwork/pyth-sdk-solidity": "^4.2.0",
+    "@stargatefinance/stg-evm-v2": "^4.0.0",
+    "@uniswap/v2-core": "^1.0.1",
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "@uniswap/v3-core": "^1.0.1",
+    "@uniswap/v3-periphery": "^1.4.4",
+    "@uniswap/v3-sdk": "^3.25.2",
+    "axios": "^1.11.0",
+    "ethers": "^5.8.0",
+    "solidity-bytes-utils": "^0.8.4",
+    "web3": "^4.16.0"
+  },
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.js --network localhost"
+  }
+}
