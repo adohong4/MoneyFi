@@ -1,22 +1,16 @@
 {
-  "name": "MoneyFi",
-  "scripts": {
-    "test": "npx hardhat test"
-  },
+  "name": "hardhat-project",
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
     "@nomicfoundation/hardhat-ethers": "^3.1.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.1.0",
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.1.1",
-    "@nomiclabs/hardhat-ethers": "^2.2.3",
-    "@openzeppelin/test-helpers": "^0.5.16",
+    "@openzeppelin/hardhat-upgrades": "^3.9.1",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.20",
     "@types/mocha": "^10.0.10",
-    "chai": "^6.0.1",
-    "ethers": "^5.8.0",
     "hardhat": "^2.26.3",
     "hardhat-gas-reporter": "^1.0.10",
     "solidity-coverage": "^0.8.16",
@@ -31,8 +25,8 @@
     "@layerzerolabs/lz-evm-protocol-v2": "^3.0.127",
     "@openzeppelin/contracts": "^5.4.0",
     "@openzeppelin/contracts-upgradeable": "^5.4.0",
-    "@openzeppelin/hardhat-upgrades": "^3.9.1",
     "@pythnetwork/pyth-sdk-solidity": "^4.2.0",
+    "@stargatefinance/stg-evm-sdk-v2": "^1.2.0",
     "@stargatefinance/stg-evm-v2": "^4.0.0",
     "@uniswap/v2-core": "^1.0.1",
     "@uniswap/v2-periphery": "^1.1.0-beta.0",
@@ -40,6 +34,7 @@
     "@uniswap/v3-periphery": "^1.4.4",
     "@uniswap/v3-sdk": "^3.25.2",
     "dotenv": "^17.2.2",
+    "ethers": "^6.15.0",
     "solidity-bytes-utils": "^0.8.4"
   }
 }

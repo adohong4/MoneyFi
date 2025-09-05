@@ -1,33 +1,69 @@
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
-import "dotenv/config";
-import "@openzeppelin/hardhat-upgrades";
+require("@nomicfoundation/hardhat-toolbox");
+require("@openzeppelin/hardhat-upgrades");
+require("dotenv").config();
 
-const { API_URL, PRIVATE_KEY, ETHERSCAN_API_KEY } = process.env;
-
-const config = {
+module.exports = {
   solidity: {
-    version: "0.8.20",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.8.26", // Hỗ trợ các hợp đồng yêu cầu 0.8.26 (QuickSwap, IMoneyFiCBridgePool)
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          evmVersion: "cancun",
+        },
       },
-    },
+      {
+        version: "0.8.24", // Hỗ trợ Balancer, Uniswap, và các thư viện external
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          evmVersion: "cancun",
+        },
+      },
+      {
+        version: "0.8.22", // Hỗ trợ Stargate và OpenZeppelin UUPSUpgradeable
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          evmVersion: "paris",
+        },
+      },
+      {
+        version: "0.8.21", // Hỗ trợ OpenZeppelin ERC1967Utils
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          evmVersion: "paris",
+        },
+      },
+      {
+        version: "0.8.20", // Hỗ trợ các hợp đồng của bạn (như MoneyFiStargateCrossChain.sol)
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+          evmVersion: "paris",
+        },
+      },
+    ],
   },
-  defaultNetwork: "sepolia",
   networks: {
-    hardhat: {
-      chainId: 1337,
-    },
     sepolia: {
-      url: API_URL,
-      accounts: [`0x${PRIVATE_KEY}`],
+      url: `https://eth-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
+      accounts: [process.env.PRIVATE_KEY],
     },
   },
   etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
+    apiKey: process.env.ETHERSCAN_API_KEY,
   },
 };
-
-export default config;
