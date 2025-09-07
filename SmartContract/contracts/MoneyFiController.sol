@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
-import { SignatureChecker } from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
-import { DefaultAccessControlEnumerable } from "./security/DefaultAccessControlEnumerable.sol";
-import { MoneyFiControllerType } from "./types/ControllerDataType.sol";
-import { IMoneyFiController } from "./interfaces/IMoneyFiController.sol";
-import { IMoneyFiERC4626UpgradeableBase } from "./interfaces/IMoneyFiERC4626UpgradeableBase.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import {DefaultAccessControlEnumerable} from "./security/DefaultAccessControlEnumerable.sol";
+import {MoneyFiControllerType} from "./types/ControllerDataType.sol";
+import {IMoneyFiController} from "./interfaces/IMoneyFiController.sol";
+import {IMoneyFiERC4626UpgradeableBase} from "./interfaces/IMoneyFiERC4626UpgradeableBase.sol";
 
 contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, IMoneyFiController {
     using Math for uint256;
@@ -40,10 +40,12 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
     mapping(address supportAssetToken => MoneyFiControllerType.TokenInfo token) public tokenExternal;
 
     // Store cross chains swap internal information
-    mapping(address crossChainSwap => MoneyFiControllerType.CrossChainParam crossChainSwapParam) public crossChainSwapInternal;
+    mapping(address crossChainSwap => MoneyFiControllerType.CrossChainParam crossChainSwapParam) public
+        crossChainSwapInternal;
 
     // Store cross chains swap external information
-    mapping(address crossChainSwap => MoneyFiControllerType.CrossChainParam crossChainSwapParam) public crossChainSwapExternal;
+    mapping(address crossChainSwap => MoneyFiControllerType.CrossChainParam crossChainSwapParam) public
+        crossChainSwapExternal;
 
     // Store strategy internal information
     mapping(address strategy => MoneyFiControllerType.Strategy data) public strategyInternal;
@@ -75,6 +77,7 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
@@ -103,7 +106,10 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
     }
 
     /// @inheritdoc IMoneyFiController
-    function setTokenInfoInternal(address _token, MoneyFiControllerType.TokenInfo memory _tokenInfo) public onlyDelegateAdmin {
+    function setTokenInfoInternal(address _token, MoneyFiControllerType.TokenInfo memory _tokenInfo)
+        public
+        onlyDelegateAdmin
+    {
         tokenInternal[_token].minDepositAmount = _tokenInfo.minDepositAmount;
         tokenInternal[_token].decimals = _tokenInfo.decimals;
         tokenInternal[_token].chainId = _tokenInfo.chainId;
@@ -115,15 +121,15 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
     }
 
     /// @inheritdoc IMoneyFiController
-    function setTokenInfoExternal(address _token, MoneyFiControllerType.TokenInfo memory _tokenInfo) public onlyDelegateAdmin {
+    function setTokenInfoExternal(address _token, MoneyFiControllerType.TokenInfo memory _tokenInfo)
+        public
+        onlyDelegateAdmin
+    {
         tokenExternal[_token] = _tokenInfo;
     }
 
     /// @inheritdoc IMoneyFiController
-    function setStrategyInternal(
-        address _strategy,
-        MoneyFiControllerType.Strategy memory _strategyInfo
-    )
+    function setStrategyInternal(address _strategy, MoneyFiControllerType.Strategy memory _strategyInfo)
         public
         onlyDelegateAdmin
     {
@@ -131,10 +137,7 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
     }
 
     /// @inheritdoc IMoneyFiController
-    function setStrategyExternal(
-        address _strategy,
-        MoneyFiControllerType.StrategyExternal memory _strategyInfo
-    )
+    function setStrategyExternal(address _strategy, MoneyFiControllerType.StrategyExternal memory _strategyInfo)
         public
         onlyDelegateAdmin
     {
@@ -150,10 +153,7 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
     function setCrossChainSwapInternal(
         MoneyFiControllerType.CrossChainParam calldata _crossChainParam,
         address _crossChainSwap
-    )
-        public
-        onlyDelegateAdmin
-    {
+    ) public onlyDelegateAdmin {
         crossChainSwapInternal[_crossChainSwap] = _crossChainParam;
     }
 
@@ -161,18 +161,12 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
     function setCrossChainSwapExternal(
         MoneyFiControllerType.CrossChainParam calldata _crossChainParam,
         address _crossChainSwap
-    )
-        public
-        onlyDelegateAdmin
-    {
+    ) public onlyDelegateAdmin {
         crossChainSwapExternal[_crossChainSwap] = _crossChainParam;
     }
 
     /// @inheritdoc IMoneyFiController
-    function setDexInternalSwap(
-        MoneyFiControllerType.InternalSwapParam calldata _internalParam,
-        address _internalSwap
-    )
+    function setDexInternalSwap(MoneyFiControllerType.InternalSwapParam calldata _internalParam, address _internalSwap)
         public
         onlyDelegateAdmin
     {
@@ -180,10 +174,7 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
     }
 
     /// @inheritdoc IMoneyFiController
-    function setDexExternalSwap(
-        MoneyFiControllerType.InternalSwapParam calldata _internalParam,
-        address _internalSwap
-    )
+    function setDexExternalSwap(MoneyFiControllerType.InternalSwapParam calldata _internalParam, address _internalSwap)
         public
         onlyDelegateAdmin
     {
@@ -207,10 +198,7 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
     }
 
     /// @inheritdoc IMoneyFiController
-    function setMaxPercentLiquidityStrategy(
-        address _tokenAddress,
-        uint256 _maxPercentLiquidityStrategy
-    )
+    function setMaxPercentLiquidityStrategy(address _tokenAddress, uint256 _maxPercentLiquidityStrategy)
         public
         onlyDelegateAdmin
     {
@@ -223,10 +211,7 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
     }
 
     /// @inheritdoc IMoneyFiController
-    function setMaxPercentLiquidityStrategyToken(
-        address _tokenAddress,
-        uint256 _maxPercentLiquidityStrategyToken
-    )
+    function setMaxPercentLiquidityStrategyToken(address _tokenAddress, uint256 _maxPercentLiquidityStrategyToken)
         public
         onlyDelegateAdmin
     {
@@ -251,8 +236,9 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
     /// @inheritdoc IMoneyFiController
     function verifySignatureReferral(bool _isReferral, bytes memory _signature, address _sender) public onlyRouter {
         if (isEnableReferralSignature) {
-            bytes32 message =
-                MessageHashUtils.toEthSignedMessageHash(keccak256(abi.encodePacked(signer, nonce++, _sender, _isReferral)));
+            bytes32 message = MessageHashUtils.toEthSignedMessageHash(
+                keccak256(abi.encodePacked(signer, nonce++, _sender, _isReferral))
+            );
 
             //validate the signature was signed from the contract's signer
             if (!SignatureChecker.isValidSignatureNow(signer, message, _signature)) {
@@ -265,7 +251,11 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
                                     Read Function
     //////////////////////////////////////////////////////////////////////////*/
     /// @inheritdoc IMoneyFiController
-    function getSupportedTokenInternalInfor(address _token) public view returns (MoneyFiControllerType.TokenInfo memory) {
+    function getSupportedTokenInternalInfor(address _token)
+        public
+        view
+        returns (MoneyFiControllerType.TokenInfo memory)
+    {
         return tokenInternal[_token];
     }
 
@@ -310,17 +300,28 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
     }
 
     /// @inheritdoc IMoneyFiController
-    function isValidUnderlyingAssetStrategyExternal(address _strategy, address _underlyingAsset) public view returns (bool) {
+    function isValidUnderlyingAssetStrategyExternal(address _strategy, address _underlyingAsset)
+        public
+        view
+        returns (bool)
+    {
         return strategyExternal[_strategy].underlyingAsset == _underlyingAsset;
     }
 
     /// @inheritdoc IMoneyFiController
-    function isCrossChainSwapSameType(address _crossChainSender, address _crossChainReceiver) public view returns (bool) {
+    function isCrossChainSwapSameType(address _crossChainSender, address _crossChainReceiver)
+        public
+        view
+        returns (bool)
+    {
         return crossChainSwapInternal[_crossChainSender].typeDex == crossChainSwapExternal[_crossChainReceiver].typeDex;
     }
 
     /// @inheritdoc IMoneyFiController
-    function validateDistributeFundToStrategy(address _strategy, address _depositor, uint256 _depositAmount) public view {
+    function validateDistributeFundToStrategy(address _strategy, address _depositor, uint256 _depositAmount)
+        public
+        view
+    {
         IMoneyFiERC4626UpgradeableBase strategyInstance = IMoneyFiERC4626UpgradeableBase(_strategy);
         uint256 maxPercentLiquidityStrategyStrategy = maxPercentLiquidityStrategyToken[strategyInstance.asset()];
         uint256 maxDepositValueTokenStrategy = maxDepositValueToken[strategyInstance.asset()];
@@ -331,7 +332,9 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
         uint256 currentDepositorAsset = strategyInstance.convertToAssets(strategyInstance.balanceOf(_depositor));
 
         // Make sure max percent liquidity in strategy smaller than maxPercentLiquidityStrategyStrategy's percent of whitelist
-        if (posTotalAssetAfterDeposit.mulDiv(10_000, poolTVL, Math.Rounding.Floor) > maxPercentLiquidityStrategyStrategy) {
+        if (
+            posTotalAssetAfterDeposit.mulDiv(10_000, poolTVL, Math.Rounding.Floor) > maxPercentLiquidityStrategyStrategy
+        ) {
             revert ExceedMaxPercentLiquidStrategyInPool();
         }
 
@@ -345,5 +348,5 @@ contract MoneyFiController is UUPSUpgradeable, DefaultAccessControlEnumerable, I
                                     Internal Function
     //////////////////////////////////////////////////////////////////////////*/
     /// @dev Override _authorizeUpgrade function to add authorization
-    function _authorizeUpgrade(address newImplementation) internal override onlyDelegateAdmin { }
+    function _authorizeUpgrade(address newImplementation) internal override onlyDelegateAdmin {}
 }

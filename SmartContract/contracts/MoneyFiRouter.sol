@@ -1,22 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { DefaultAccessControlEnumerable } from "./security/DefaultAccessControlEnumerable.sol";
-import { IMoneyFiRouter } from "./interfaces/IMoneyFiRouter.sol";
-import { IMoneyFiController } from "./interfaces/IMoneyFiController.sol";
-import { IMoneyFiFundVault } from "./interfaces/IMoneyFiFundVault.sol";
-import { IMoneyFiSwap } from "./interfaces/dex/IMoneyFiSwap.sol";
-import { IMoneyFiStrategyUpgradeableCommon } from "./interfaces/IMoneyFiStrategyUpgradeableCommon.sol";
-import { RouterCommonType } from "./types/RouterDataType.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {DefaultAccessControlEnumerable} from "./security/DefaultAccessControlEnumerable.sol";
+import {IMoneyFiRouter} from "./interfaces/IMoneyFiRouter.sol";
+import {IMoneyFiController} from "./interfaces/IMoneyFiController.sol";
+import {IMoneyFiFundVault} from "./interfaces/IMoneyFiFundVault.sol";
+import {IMoneyFiSwap} from "./interfaces/dex/IMoneyFiSwap.sol";
+import {IMoneyFiStrategyUpgradeableCommon} from "./interfaces/IMoneyFiStrategyUpgradeableCommon.sol";
+import {RouterCommonType} from "./types/RouterDataType.sol";
 
-contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausable, ReentrancyGuard, IMoneyFiRouter {
+contract MoneyFiRouter is
+    UUPSUpgradeable,
+    DefaultAccessControlEnumerable,
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    IMoneyFiRouter
+{
     using Math for uint256;
     using SafeERC20 for IERC20;
 
@@ -56,6 +62,9 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
     /// @param moneyFiController_ The address of the MoneyFiController contract. This contract manages core protocol logic.
     /// @param moneyFundVault_ The address of the MoneyFiFundVault contract. This contract handles fund storage and accounting.
     function initialize(address admin_, address moneyFiController_, address moneyFundVault_) external initializer {
+        __UUPSUpgradeable_init(); // Khởi tạo UUPS
+        __Pausable_init(); // Khởi tạo Pausable
+        __ReentrancyGuard_init();
         __DefaultAccessControlEnumerable_init(admin_);
 
         moneyFiController = IMoneyFiController(moneyFiController_);
@@ -71,27 +80,27 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
         IERC20(_depositParam.tokenAddress).safeTransferFrom(msg.sender, address(this), _depositParam.amount);
         IERC20(_depositParam.tokenAddress).safeIncreaseAllowance(address(moneyFiFundVault), _depositParam.amount);
 
-        uint256 actualDepositAmount = moneyFiFundVault.depositFund(_depositParam.tokenAddress, msg.sender, _depositParam.amount);
+        uint256 actualDepositAmount =
+            moneyFiFundVault.depositFund(_depositParam.tokenAddress, msg.sender, _depositParam.amount);
 
-        emit DepositFund(msg.sender, _depositParam.tokenAddress, _depositParam.amount, actualDepositAmount, block.timestamp);
+        emit DepositFund(
+            msg.sender, _depositParam.tokenAddress, _depositParam.amount, actualDepositAmount, block.timestamp
+        );
     }
 
     /// @inheritdoc IMoneyFiRouter
     function depositFundToStrategySameChainFromOperator(
         RouterCommonType.DepositToStrategySameChain memory _depositToStrategy,
         RouterCommonType.SwapTokenWhenDepositParam memory _swapTokenParam
-    )
-        external
-        onlyAtLeastOperator
-        whenNotPaused
-    {
+    ) external onlyAtLeastOperator whenNotPaused {
         // Check strategy active
         if (!moneyFiController.isStrategyInternalActive(_depositToStrategy.strategyAddress)) {
             revert InvalidStrategyInternalChain();
         }
         address underlyingAsset = IMoneyFiStrategyUpgradeableCommon(_depositToStrategy.strategyAddress).asset();
 
-        uint256 convertedFeeIntoRightDecimal = _convertSystemFeeDecimal(_depositToStrategy.distributionFee, underlyingAsset);
+        uint256 convertedFeeIntoRightDecimal =
+            _convertSystemFeeDecimal(_depositToStrategy.distributionFee, underlyingAsset);
 
         // Transfer fund from funVault to router
         moneyFiFundVault.transferFundToRouter(
@@ -103,7 +112,10 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
 
         // Swap distribute asset to underlying asset in strategy if need + validate swap params
         uint256 actualSwapAmountOut = _swapTokenWhenDepositFundSameChainFromOperator(
-            _depositToStrategy, _swapTokenParam, underlyingAsset, _depositToStrategy.amount - convertedFeeIntoRightDecimal
+            _depositToStrategy,
+            _swapTokenParam,
+            underlyingAsset,
+            _depositToStrategy.amount - convertedFeeIntoRightDecimal
         );
 
         uint256 underlyingAssetBalance = IERC20(underlyingAsset).balanceOf(address(this));
@@ -146,11 +158,7 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
         bool _isReferral,
         bytes memory _signature,
         RouterCommonType.SwapParam memory swapParam
-    )
-        external
-        withdrawRateLimit
-        whenNotPaused
-    {
+    ) external withdrawRateLimit whenNotPaused {
         moneyFiController.verifySignatureReferral(_isReferral, _signature, msg.sender);
 
         // Transfer un-distribute fund to user
@@ -165,11 +173,7 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
     /// @inheritdoc IMoneyFiRouter
     function createWithdrawRequestOnAnotherChain(
         RouterCommonType.WithdrawStrategyMultipleChains[] memory _withdrawStrategyMultipleChains
-    )
-        external
-        withdrawRateLimit
-        whenNotPaused
-    {
+    ) external withdrawRateLimit whenNotPaused {
         uint16 _withdrawStrategyMultipleChainsLength = uint16(_withdrawStrategyMultipleChains.length);
 
         if (_withdrawStrategyMultipleChains.length <= 0) {
@@ -295,7 +299,7 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
     // --------------------------- Internal  ------------------------------//
     // ------------------------------------------------------------------- //
     /// @dev Override _authorizeUpgrade function to add authorization
-    function _authorizeUpgrade(address _newImplementation) internal override onlyDelegateAdmin { }
+    function _authorizeUpgrade(address _newImplementation) internal override onlyDelegateAdmin {}
 
     /// @dev Swap deposited token to underlying asset strategy
     function _swapTokenWhenDepositFundSameChainFromOperator(
@@ -303,10 +307,7 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
         RouterCommonType.SwapTokenWhenDepositParam memory _swapTokenParam,
         address _underlyingAsset,
         uint256 _actualAmountin
-    )
-        internal
-        returns (uint256 amountOut)
-    {
+    ) internal returns (uint256 amountOut) {
         // Swap distribute asset to underlying asset in strategy if need
         if (_depositToStrategy.depositedTokenAddress != _underlyingAsset) {
             amountOut = _swapToken(
@@ -331,9 +332,7 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
         RouterCommonType.WithdrawStrategySameChain[] memory _withdrawStrategySameChains,
         RouterCommonType.SwapParam memory _swapParam,
         bool _isReferral
-    )
-        internal
-    {
+    ) internal {
         uint256 i = 0;
         // Transfer strategy fund to user
         for (; i < _withdrawStrategySameChains.length;) {
@@ -424,9 +423,7 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
     function _withdrawUndistributedFundSameChain(
         RouterCommonType.WithdrawStrategySameChainUndistributed[] memory _unDistributedWithdraw,
         RouterCommonType.SwapParam memory _swapParam
-    )
-        internal
-    {
+    ) internal {
         // Transfer un-distribute fund to user
         uint256 unDistributedLength = _unDistributedWithdraw.length;
         uint256 i;
@@ -452,7 +449,10 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
                 );
             } else {
                 moneyFiFundVault.withdrawUnDistributedFundToUser(
-                    msg.sender, msg.sender, _unDistributedWithdraw[i].tokenAddress, _unDistributedWithdraw[i].unDistributedAmount
+                    msg.sender,
+                    msg.sender,
+                    _unDistributedWithdraw[i].tokenAddress,
+                    _unDistributedWithdraw[i].unDistributedAmount
                 );
             }
 
@@ -500,7 +500,8 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
         _rebalanceStrategyParam.strategy.beforeRebalance();
         IERC20(_rebalanceStrategyParam.asset).safeIncreaseAllowance(
             address(moneyFiFundVault),
-            _rebalanceStrategyParam.rebalanceAmount + _rebalanceStrategyParam.protocolFee + _rebalanceStrategyParam.rebalanceFee
+            _rebalanceStrategyParam.rebalanceAmount + _rebalanceStrategyParam.protocolFee
+                + _rebalanceStrategyParam.rebalanceFee
         );
         moneyFiFundVault.rebalanceFundSameChain(
             _rebalanceStrategyParam.asset,
@@ -525,10 +526,7 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
     }
 
     /// @dev Get system profit
-    function _getUserSystemProfit(
-        int256 _totalProfit,
-        bool _isReferral
-    )
+    function _getUserSystemProfit(int256 _totalProfit, bool _isReferral)
         internal
         view
         returns (uint256 protocolFee, uint256 referralFee)
@@ -542,7 +540,11 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
     }
 
     /// @dev Convert to right decimal fee
-    function _convertSystemFeeDecimal(uint256 _originalFee, address _asset) internal view returns (uint256 convertFee) {
+    function _convertSystemFeeDecimal(uint256 _originalFee, address _asset)
+        internal
+        view
+        returns (uint256 convertFee)
+    {
         if (_originalFee > moneyFiController.averageSystemActionFee()) {
             revert InvalidSystemFee();
         }
@@ -556,10 +558,9 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
         }
     }
 
-    function _validateWithdrawRequestArg(RouterCommonType.WithdrawStrategyMultipleChains memory _withdrawStrategyMultipleChain)
-        internal
-        pure
-    {
+    function _validateWithdrawRequestArg(
+        RouterCommonType.WithdrawStrategyMultipleChains memory _withdrawStrategyMultipleChain
+    ) internal pure {
         if (
             _withdrawStrategyMultipleChain.withdrawStrategySameChains.length <= 0
                 && _withdrawStrategyMultipleChain.unDistributedWithdraw.length <= 0
@@ -570,7 +571,8 @@ contract MoneyFiRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausa
         if (_withdrawStrategyMultipleChain.tokenOut == address(0)) {
             revert RequiredAddressNotNull();
         }
-        uint16 withdrawStrategySameChainLength = uint16(_withdrawStrategyMultipleChain.withdrawStrategySameChains.length);
+        uint16 withdrawStrategySameChainLength =
+            uint16(_withdrawStrategyMultipleChain.withdrawStrategySameChains.length);
         uint16 unDistributedWithdrawLength = uint16(_withdrawStrategyMultipleChain.unDistributedWithdraw.length);
 
         for (uint16 index1; index1 < withdrawStrategySameChainLength;) {

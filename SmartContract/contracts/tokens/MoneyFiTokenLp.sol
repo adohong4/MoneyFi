@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { Context } from "@openzeppelin/contracts/utils/Context.sol";
-import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol"; // Chỉ giữ ContextUpgradeable
 
-import { IMoneyFiTokenLp } from "../interfaces/IMoneyFiTokenLp.sol";
-import { DefaultAccessControlEnumerable } from "../security/DefaultAccessControlEnumerable.sol";
+import {IMoneyFiTokenLp} from "../interfaces/IMoneyFiTokenLp.sol";
+import {DefaultAccessControlEnumerable} from "../security/DefaultAccessControlEnumerable.sol";
 
 /// @title MoneyFiV1Token.
 /// @notice See document in {IMoneyFiLpStrategy}.
@@ -27,13 +26,7 @@ contract MoneyFiTokenLp is ERC20Upgradeable, UUPSUpgradeable, DefaultAccessContr
         _disableInitializers();
     }
 
-    function initialize(
-        address fundVault_,
-        address admin_,
-        string memory name_,
-        string memory symbol_,
-        uint8 decimals_
-    )
+    function initialize(address fundVault_, address admin_, string memory name_, string memory symbol_, uint8 decimals_)
         public
         initializer
     {
@@ -62,17 +55,20 @@ contract MoneyFiTokenLp is ERC20Upgradeable, UUPSUpgradeable, DefaultAccessContr
     }
 
     /// @dev Override with authentication modifer.
-    function _authorizeUpgrade(address newImplementation) internal override onlyDelegateAdmin { }
+    function _authorizeUpgrade(address newImplementation) internal override onlyDelegateAdmin {}
 
-    function _msgSender() internal view override(Context, ContextUpgradeable) returns (address) {
+    function _msgSender() internal view override(ContextUpgradeable) returns (address) {
+        // Xóa Context
         return msg.sender;
     }
 
-    function _msgData() internal pure override(Context, ContextUpgradeable) returns (bytes calldata) {
+    function _msgData() internal pure override(ContextUpgradeable) returns (bytes calldata) {
+        // Xóa Context
         return msg.data;
     }
 
-    function _contextSuffixLength() internal pure override(Context, ContextUpgradeable) returns (uint256) {
+    function _contextSuffixLength() internal pure override(ContextUpgradeable) returns (uint256) {
+        // Xóa Context
         return 0;
     }
 

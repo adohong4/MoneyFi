@@ -1,20 +1,26 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { DefaultAccessControlEnumerable } from "./security/DefaultAccessControlEnumerable.sol";
-import { IMoneyFiFundVault } from "./interfaces/IMoneyFiFundVault.sol";
-import { IMoneyFiController } from "./interfaces/IMoneyFiController.sol";
-import { IMoneyFiTokenLp } from "./interfaces/IMoneyFiTokenLp.sol";
-import { MoneyFiFundVaultType } from "./types/FundVaultDataType.sol";
-import { MoneyFiControllerType } from "./types/ControllerDataType.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import {DefaultAccessControlEnumerable} from "./security/DefaultAccessControlEnumerable.sol";
+import {IMoneyFiFundVault} from "./interfaces/IMoneyFiFundVault.sol";
+import {IMoneyFiController} from "./interfaces/IMoneyFiController.sol";
+import {IMoneyFiTokenLp} from "./interfaces/IMoneyFiTokenLp.sol";
+import {MoneyFiFundVaultType} from "./types/FundVaultDataType.sol";
+import {MoneyFiControllerType} from "./types/ControllerDataType.sol";
 
-contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnumerable, ReentrancyGuard, IMoneyFiFundVault {
+contract MoneyFiFundVault is
+    UUPSUpgradeable,
+    PausableUpgradeable,
+    DefaultAccessControlEnumerable,
+    ReentrancyGuardUpgradeable,
+    IMoneyFiFundVault
+{
     using SafeERC20 for IERC20;
     using Math for uint256;
 
@@ -29,7 +35,8 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
     address public feeTo;
 
     // Store user deposit information follow on token
-    mapping(address token => mapping(address user => MoneyFiFundVaultType.UserDepositInfor depositInfor)) userDepositInfor;
+    mapping(address token => mapping(address user => MoneyFiFundVaultType.UserDepositInfor depositInfor))
+        userDepositInfor;
 
     // Store total token fee
     mapping(address token => uint256 totalFee) public totalProtocolFee;
@@ -62,6 +69,7 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
         _;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
@@ -70,17 +78,16 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
                                     Write Function
     //////////////////////////////////////////////////////////////////////////*/
     function initialize(address admin_, address controller_, address feeTo_) external initializer {
-        __DefaultAccessControlEnumerable_init(admin_);
+        __UUPSUpgradeable_init(); // Khởi tạo UUPS
+        __Pausable_init(); // Khởi tạo Pausable
+        __ReentrancyGuard_init(); // Khởi tạo ReentrancyGuard
+        __DefaultAccessControlEnumerable_init(admin_); // Khởi tạo AccessControl
         controller = controller_;
         feeTo = feeTo_;
     }
 
     /// @inheritdoc IMoneyFiFundVault
-    function depositFund(
-        address _tokenAddress,
-        address _receiver,
-        uint256 _amount
-    )
+    function depositFund(address _tokenAddress, address _receiver, uint256 _amount)
         external
         whenNotPaused
         nonReentrant
@@ -106,12 +113,9 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
         address _userAddress,
         uint256 _amount,
         uint256 _distributionFee
-    )
-        external
-        onlyRouter
-        whenNotPaused
-    {
-        uint256 actualDistributionAmount = _transferFundToRouter(_tokenAddress, _userAddress, _amount, 0, _distributionFee);
+    ) external onlyRouter whenNotPaused {
+        uint256 actualDistributionAmount =
+            _transferFundToRouter(_tokenAddress, _userAddress, _amount, 0, _distributionFee);
         emit TransferFundToRouterFundVault(_tokenAddress, _amount, actualDistributionAmount, block.timestamp);
     }
 
@@ -121,21 +125,16 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
         address _userAddress,
         uint256 _amount,
         uint256 _distributionFee
-    )
-        external
-        onlyRouter
-        whenNotPaused
-    {
-        uint256 actualDistributionAmount = _transferFundToRouter(_tokenAddress, _userAddress, _amount, _amount, _distributionFee);
-        emit TransferFundToRouterFundVaultCrossChain(_tokenAddress, _amount, actualDistributionAmount, _amount, block.timestamp);
+    ) external onlyRouter whenNotPaused {
+        uint256 actualDistributionAmount =
+            _transferFundToRouter(_tokenAddress, _userAddress, _amount, _amount, _distributionFee);
+        emit TransferFundToRouterFundVaultCrossChain(
+            _tokenAddress, _amount, actualDistributionAmount, _amount, block.timestamp
+        );
     }
 
     /// @inheritdoc IMoneyFiFundVault
-    function transferFundFromRouterToFundVault(
-        address _tokenAddress,
-        address _depositor,
-        uint256 _amount
-    )
+    function transferFundFromRouterToFundVault(address _tokenAddress, address _depositor, uint256 _amount)
         public
         onlyRouter
         whenNotPaused
@@ -166,11 +165,7 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
         address _receiver,
         address _tokenAddress,
         uint256 _amount
-    )
-        external
-        onlyRouter
-        whenNotPaused
-    {
+    ) external onlyRouter whenNotPaused {
         if (_amount <= 0) {
             revert InvalidAmount();
         }
@@ -204,10 +199,7 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
         uint256 _protocolFee,
         uint256 _referralFee,
         uint256 _rebalanceFee
-    )
-        external
-        onlyRouter
-    {
+    ) external onlyRouter {
         _validateToken(_token);
 
         // protocol fee includes referral fee
@@ -233,7 +225,10 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
     }
 
     /// @inheritdoc IMoneyFiFundVault
-    function increaseProtocolAndReferralFee(address _token, uint256 _protocolFee, uint256 _referralFee) external onlyRouter {
+    function increaseProtocolAndReferralFee(address _token, uint256 _protocolFee, uint256 _referralFee)
+        external
+        onlyRouter
+    {
         _validateToken(_token);
 
         if (_referralFee > 0) {
@@ -373,10 +368,7 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc IMoneyFiFundVault
-    function getUserDepositInfor(
-        address _token,
-        address _user
-    )
+    function getUserDepositInfor(address _token, address _user)
         external
         view
         returns (MoneyFiFundVaultType.UserDepositInfor memory)
@@ -391,11 +383,7 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
         uint256 _amount,
         uint256 _minusOriginAmount,
         uint256 _distributionFee
-    )
-        internal
-        whenNotPaused
-        returns (uint256 actualDistributionAmount)
-    {
+    ) internal whenNotPaused returns (uint256 actualDistributionAmount) {
         if (_amount <= 0) {
             revert InvalidAmount();
         }
@@ -421,8 +409,10 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
             revert InsufficientAmount();
         }
 
-        if (userDepositInfor[_tokenAddress][_userAddress].originalDepositAmount >= _minusOriginAmount && _minusOriginAmount >= 0)
-        {
+        if (
+            userDepositInfor[_tokenAddress][_userAddress].originalDepositAmount >= _minusOriginAmount
+                && _minusOriginAmount >= 0
+        ) {
             userDepositInfor[_tokenAddress][_userAddress].originalDepositAmount -= _minusOriginAmount;
         }
 
@@ -439,11 +429,12 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @dev Override with authentication modifer.
-    function _authorizeUpgrade(address newImplementation) internal override onlyDelegateAdmin { }
+    function _authorizeUpgrade(address newImplementation) internal override onlyDelegateAdmin {}
 
     // / @dev Validate active token and minimum deposit amount
     function _validateDeposit(uint256 _amount, address _token) internal view {
-        MoneyFiControllerType.TokenInfo memory tokenInfo = IMoneyFiController(controller).getSupportedTokenInternalInfor(_token);
+        MoneyFiControllerType.TokenInfo memory tokenInfo =
+            IMoneyFiController(controller).getSupportedTokenInternalInfor(_token);
 
         if (!tokenInfo.isActive) {
             revert InvalidSupportedTokenInternal();
@@ -463,7 +454,8 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
 
     /// @dev Mint lp token
     function _mintLp(address _token, address _depositor, uint256 _amount) internal {
-        MoneyFiControllerType.TokenInfo memory tokenInfo = IMoneyFiController(controller).getSupportedTokenInternalInfor(_token);
+        MoneyFiControllerType.TokenInfo memory tokenInfo =
+            IMoneyFiController(controller).getSupportedTokenInternalInfor(_token);
         address lpToken = tokenInfo.lpTokenAddress;
 
         if (lpToken == address(0)) {
@@ -475,7 +467,8 @@ contract MoneyFiFundVault is UUPSUpgradeable, Pausable, DefaultAccessControlEnum
 
     /// @dev Burn lp token
     function _burnLp(address _token, address _depositor, uint256 _amount) internal {
-        MoneyFiControllerType.TokenInfo memory tokenInfo = IMoneyFiController(controller).getSupportedTokenInternalInfor(_token);
+        MoneyFiControllerType.TokenInfo memory tokenInfo =
+            IMoneyFiController(controller).getSupportedTokenInternalInfor(_token);
         address lpToken = tokenInfo.lpTokenAddress;
 
         if (lpToken == address(0)) {

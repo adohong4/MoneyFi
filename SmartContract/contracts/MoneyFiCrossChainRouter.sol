@@ -1,23 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { DefaultAccessControlEnumerable } from "./security/DefaultAccessControlEnumerable.sol";
-import { IMoneyFiCrossChainRouter } from "./interfaces/IMoneyFiCrossChainRouter.sol";
-import { IMoneyFiController } from "./interfaces/IMoneyFiController.sol";
-import { IMoneyFiFundVault } from "./interfaces/IMoneyFiFundVault.sol";
-import { IMoneyFiSwap } from "./interfaces/dex/IMoneyFiSwap.sol";
-import { IMoneyFiStrategyUpgradeableCommon } from "./interfaces/IMoneyFiStrategyUpgradeableCommon.sol";
-import { RouterCommonType } from "./types/RouterDataType.sol";
-import { IMoneyFiBridgeCrossChain } from "./interfaces/IMoneyFiBridgeCrossChain.sol";
-import { DexCrossChainType } from "./types/DexCrossChainType.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {DefaultAccessControlEnumerable} from "./security/DefaultAccessControlEnumerable.sol";
+import {IMoneyFiCrossChainRouter} from "./interfaces/IMoneyFiCrossChainRouter.sol";
+import {IMoneyFiController} from "./interfaces/IMoneyFiController.sol";
+import {IMoneyFiFundVault} from "./interfaces/IMoneyFiFundVault.sol";
+import {IMoneyFiSwap} from "./interfaces/dex/IMoneyFiSwap.sol";
+import {IMoneyFiStrategyUpgradeableCommon} from "./interfaces/IMoneyFiStrategyUpgradeableCommon.sol";
+import {RouterCommonType} from "./types/RouterDataType.sol";
+import {IMoneyFiBridgeCrossChain} from "./interfaces/IMoneyFiBridgeCrossChain.sol";
+import {DexCrossChainType} from "./types/DexCrossChainType.sol";
 
-contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumerable, Pausable, IMoneyFiCrossChainRouter {
+contract MoneyFiCrossChainRouter is
+    UUPSUpgradeable,
+    DefaultAccessControlEnumerable,
+    PausableUpgradeable,
+    IMoneyFiCrossChainRouter
+{
     using Math for uint256;
     using SafeERC20 for IERC20;
 
@@ -37,6 +42,8 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
     /// @param moneyFiController_ The address of the MoneyFiController contract. This contract manages core protocol logic.
     /// @param moneyFundVault_ The address of the MoneyFiFundVault contract. This contract handles fund storage and accounting.
     function initialize(address admin_, address moneyFiController_, address moneyFundVault_) external initializer {
+        __UUPSUpgradeable_init(); // Khởi tạo UUPS
+        __Pausable_init();
         __DefaultAccessControlEnumerable_init(admin_);
 
         moneyFiController = IMoneyFiController(moneyFiController_);
@@ -51,12 +58,7 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
     function depositFundToStrategyCrossChainFromOperator(
         RouterCommonType.DepositToStrategyCrossChain memory _depositToStrategyCrossChain,
         RouterCommonType.SwapTokenWhenDepositParam memory _swapTokenInternalParam
-    )
-        external
-        payable
-        onlyAtLeastOperator
-        whenNotPaused
-    {
+    ) external payable onlyAtLeastOperator whenNotPaused {
         // Validate dex cross chain sender + receiver
         _validateBeforeTransferFundCrossChain(
             _depositToStrategyCrossChain.crossChainDexSender,
@@ -64,8 +66,9 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
             _depositToStrategyCrossChain.tokenInForBridge
         );
 
-        uint256 convertedFeeIntoRightDecimal =
-            _convertSystemFeeDecimal(_depositToStrategyCrossChain.distributionFee, _depositToStrategyCrossChain.tokenInForBridge);
+        uint256 convertedFeeIntoRightDecimal = _convertSystemFeeDecimal(
+            _depositToStrategyCrossChain.distributionFee, _depositToStrategyCrossChain.tokenInForBridge
+        );
 
         // Transfer fund from funVault to router
         // Already validate in in FundVault contract
@@ -92,7 +95,9 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
             _depositToStrategyCrossChain.crossChainDexSender, tokenInForBridgeBl
         );
 
-        IMoneyFiBridgeCrossChain(_depositToStrategyCrossChain.crossChainDexSender).takeTransportDeposit{ value: msg.value }(
+        IMoneyFiBridgeCrossChain(_depositToStrategyCrossChain.crossChainDexSender).takeTransportDeposit{
+            value: msg.value
+        }(
             DexCrossChainType.DepositCrossChainParam({
                 tokenInForBridge: _depositToStrategyCrossChain.tokenInForBridge,
                 receiver: _depositToStrategyCrossChain.crossChainDexReceiver,
@@ -125,11 +130,7 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
         address _receiver,
         bool _isReferral,
         uint256 _withdrawFee
-    )
-        external
-        onlyAtLeastOperator
-        whenNotPaused
-    {
+    ) external onlyAtLeastOperator whenNotPaused {
         for (uint256 i; i < _withdrawSameChainFromOperators.length;) {
             RouterCommonType.WithdrawSameChainFromOperator memory withdrawSameChainFromOperators =
                 _withdrawSameChainFromOperators[i];
@@ -162,7 +163,8 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
                 );
             }
 
-            uint256 convertedFeeIntoRightDecimal = _convertSystemFeeDecimal(_withdrawFee, withdrawSameChainFromOperators.tokenIn);
+            uint256 convertedFeeIntoRightDecimal =
+                _convertSystemFeeDecimal(_withdrawFee, withdrawSameChainFromOperators.tokenIn);
 
             if (amountTokenToSend <= convertedFeeIntoRightDecimal) {
                 revert InvalidSystemFee();
@@ -221,14 +223,10 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
         address _receiver,
         bool _isReferral,
         uint256 _withdrawFee
-    )
-        external
-        payable
-        whenNotPaused
-        onlyAtLeastOperator
-    {
+    ) external payable whenNotPaused onlyAtLeastOperator {
         for (uint256 i = 0; i < _withdrawStrategyMultipleChainsV2.length;) {
-            RouterCommonType.WithdrawStrategyMultipleChainsV2 memory withdrawStruct = _withdrawStrategyMultipleChainsV2[i];
+            RouterCommonType.WithdrawStrategyMultipleChainsV2 memory withdrawStruct =
+                _withdrawStrategyMultipleChainsV2[i];
             RouterCommonType.SwapParam memory swapParam = withdrawStruct.swapParam;
 
             address tokenToSend = withdrawStruct.tokenIn;
@@ -287,7 +285,7 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
             }
 
             IERC20(tokenToSend).safeIncreaseAllowance(address(withdrawStruct.crossChain), amountTokenToSend);
-            IMoneyFiBridgeCrossChain(withdrawStruct.crossChain).takeTransportWithdraw{ value: withdrawStruct.nativeValue }(
+            IMoneyFiBridgeCrossChain(withdrawStruct.crossChain).takeTransportWithdraw{value: withdrawStruct.nativeValue}(
                 DexCrossChainType.WithdrawCrossChainParam({
                     tokenInForBridge: tokenToSend,
                     receiver: _receiver,
@@ -322,11 +320,7 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
     function withdrawFundCrossChainFromOperatorHotWallet(
         RouterCommonType.WithdrawFromOperatorHotWallet[] memory _withdrawFromOperatorHotWallets,
         RouterCommonType.AdditionParamWithDrawHotWallet memory _additionParamWithDrawHotWallet
-    )
-        external
-        onlyAtLeastOperator
-        whenNotPaused
-    {
+    ) external onlyAtLeastOperator whenNotPaused {
         if (
             _additionParamWithDrawHotWallet.hotWallet == address(0)
                 || !isWhiteListHotWallet[_additionParamWithDrawHotWallet.hotWallet]
@@ -339,7 +333,8 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
                 _withdrawFromOperatorHotWallets[i];
 
             if (
-                withdrawFromOperatorHotWallet.tokenIn != withdrawFromOperatorHotWallet.unDistributedWithdraw.tokenAddress
+                withdrawFromOperatorHotWallet.tokenIn
+                    != withdrawFromOperatorHotWallet.unDistributedWithdraw.tokenAddress
                     && withdrawFromOperatorHotWallet.unDistributedWithdraw.tokenAddress != address(0)
             ) {
                 revert InvalidSameToken();
@@ -365,8 +360,9 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
                 );
             }
 
-            uint256 convertedFeeIntoRightDecimal =
-                _convertSystemFeeDecimal(_additionParamWithDrawHotWallet.withdrawFee, withdrawFromOperatorHotWallet.tokenIn);
+            uint256 convertedFeeIntoRightDecimal = _convertSystemFeeDecimal(
+                _additionParamWithDrawHotWallet.withdrawFee, withdrawFromOperatorHotWallet.tokenIn
+            );
 
             if (amountTokenToSend <= convertedFeeIntoRightDecimal) {
                 revert InvalidSystemFee();
@@ -431,7 +427,7 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
         if (_to == address(0)) {
             revert RequiredAddressNotNull();
         }
-        (bool sent,) = _to.call{ value: address(this).balance }("");
+        (bool sent,) = _to.call{value: address(this).balance}("");
         if (!sent) {
             revert FailedSendNative();
         }
@@ -452,7 +448,7 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
     // --------------------------- Internal  ------------------------------//
     // ------------------------------------------------------------------- //
     /// @dev Override _authorizeUpgrade function to add authorization
-    function _authorizeUpgrade(address _newImplementation) internal override onlyDelegateAdmin { }
+    function _authorizeUpgrade(address _newImplementation) internal override onlyDelegateAdmin {}
 
     /// @dev Swap deposited token to underlying asset strategy before swap token
     function _swapTokenWhenDepositFundCrossChainFromOperator(
@@ -460,10 +456,7 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
         RouterCommonType.SwapTokenWhenDepositParam memory _swapTokenInternalParam,
         address _tokenOut,
         uint256 _actualAmountIn
-    )
-        internal
-        returns (uint256 amountOut)
-    {
+    ) internal returns (uint256 amountOut) {
         if (_depositToStrategyCrossChain.tokenInForBridge != _depositToStrategyCrossChain.depositedTokenAddress) {
             // Swap distribute asset to underlying asset in strategy if need
             if (
@@ -496,10 +489,7 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
     function _withdrawFundStrategySameChain(
         RouterCommonType.WithdrawStrategySameChain[] memory _withdrawStrategySameChains,
         RouterCommonType.AdditionParam memory _additionParam
-    )
-        internal
-        returns (uint256, uint256)
-    {
+    ) internal returns (uint256, uint256) {
         uint256 i = 0;
         uint256 totalProtocolFee = 0;
         address sender = _additionParam.receiver;
@@ -573,10 +563,7 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
     function _withdrawUndistributedFundSameChain(
         RouterCommonType.WithdrawStrategySameChainUndistributed memory _unDistributedWithdraw,
         address _receiver
-    )
-        internal
-        returns (uint256)
-    {
+    ) internal returns (uint256) {
         moneyFiFundVault.withdrawUnDistributedFundToUser(
             _receiver, address(this), _unDistributedWithdraw.tokenAddress, _unDistributedWithdraw.unDistributedAmount
         );
@@ -589,10 +576,7 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
         address _crossChainDexSender,
         address _crossChainDexReceiver,
         address _tokenInForBridge
-    )
-        internal
-        view
-    {
+    ) internal view {
         // Check dex cross chain sender is active
         if (!moneyFiController.isDexCrossChainInternalActive(_crossChainDexSender)) {
             revert InvalidDexCrossChainInternal();
@@ -613,7 +597,11 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
     }
 
     /// @dev Convert to right decimal fee
-    function _convertSystemFeeDecimal(uint256 _originalFee, address _asset) internal view returns (uint256 convertFee) {
+    function _convertSystemFeeDecimal(uint256 _originalFee, address _asset)
+        internal
+        view
+        returns (uint256 convertFee)
+    {
         if (_originalFee > moneyFiController.averageSystemActionFee()) {
             revert InvalidSystemFee();
         }
@@ -654,7 +642,8 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
         _rebalanceStrategyParam.strategy.beforeRebalance();
         IERC20(_rebalanceStrategyParam.asset).safeIncreaseAllowance(
             address(moneyFiFundVault),
-            _rebalanceStrategyParam.rebalanceAmount + _rebalanceStrategyParam.protocolFee + _rebalanceStrategyParam.rebalanceFee
+            _rebalanceStrategyParam.rebalanceAmount + _rebalanceStrategyParam.protocolFee
+                + _rebalanceStrategyParam.rebalanceFee
         );
         moneyFiFundVault.rebalanceFundSameChain(
             _rebalanceStrategyParam.asset,
@@ -679,10 +668,7 @@ contract MoneyFiCrossChainRouter is UUPSUpgradeable, DefaultAccessControlEnumera
     }
 
     /// @dev Get system profit
-    function _getUserSystemProfit(
-        int256 _totalProfit,
-        bool _isReferral
-    )
+    function _getUserSystemProfit(int256 _totalProfit, bool _isReferral)
         internal
         view
         returns (uint256 protocolFee, uint256 referralFee)

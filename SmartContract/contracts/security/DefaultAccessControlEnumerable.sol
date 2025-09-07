@@ -1,23 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { AccessControlEnumerable } from "@openzeppelin/contracts/access/extensions/AccessControlEnumerable.sol";
-
-import { IDefaultAccessControlEnumerable } from "../interfaces/IDefaultAccessControlEnumerable.sol";
+import {AccessControlEnumerableUpgradeable} from
+    "@openzeppelin/contracts-upgradeable/access/extensions/AccessControlEnumerableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {IDefaultAccessControlEnumerable} from "../interfaces/IDefaultAccessControlEnumerable.sol";
 /// @notice This is a default access control with 3 roles:
 // Todo: write test to check allow permission
 /// - ADMIN: allowed to do anything
 /// - ADMIN_DELEGATE: allowed to do anything except assigning ADMIN and ADMIN_DELEGATE roles
 /// - OPERATOR: low-privileged role, generally keeper or some other bot
 
-contract DefaultAccessControlEnumerable is AccessControlEnumerable, IDefaultAccessControlEnumerable {
+contract DefaultAccessControlEnumerable is
+    Initializable,
+    AccessControlEnumerableUpgradeable,
+    IDefaultAccessControlEnumerable
+{
     bytes32 public constant OPERATOR = keccak256("operator");
     bytes32 public constant ADMIN_ROLE = keccak256("admin");
     bytes32 public constant ADMIN_DELEGATE_ROLE = keccak256("admin_delegate");
     bytes32 public constant SIGNER = keccak256("signer");
 
     /// @param admin_ Admin of the contract
-    function __DefaultAccessControlEnumerable_init(address admin_) internal {
+    function __DefaultAccessControlEnumerable_init(address admin_) internal onlyInitializing {
+        __AccessControlEnumerable_init();
         _grantRole(OPERATOR, admin_);
         _grantRole(ADMIN_ROLE, admin_);
         _grantRole(ADMIN_DELEGATE_ROLE, admin_);
