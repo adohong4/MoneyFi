@@ -1,5 +1,5 @@
 const { ethers, upgrades } = require("hardhat");
-const { saveAddress, getAddresses } = require("./contractAddresses");
+const { saveAddress, getAddresses } = require("../contractAddresses");
 
 async function main() {
     const [deployer] = await ethers.getSigners();
@@ -7,12 +7,13 @@ async function main() {
 
     const addresses = getAddresses();
     const fundVaultAddress = addresses.MoneyFiFundVault;
+    console.log("fundVaultAddress:", fundVaultAddress);
     if (!fundVaultAddress) throw new Error("MoneyFiFundVault not deployed");
 
     const MoneyFiTokenLp = await ethers.getContractFactory("MoneyFiTokenLp");
     const tokenLp = await upgrades.deployProxy(
         MoneyFiTokenLp,
-        [fundVaultAddress, deployer.address, "MoneyFi LP Token", "MFLP", 18],
+        [fundVaultAddress, deployer.address, "MoneyUSDC", "mUSDC", 18],
         { initializer: "initialize" }
     );
     await tokenLp.waitForDeployment();

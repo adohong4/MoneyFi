@@ -146,7 +146,7 @@ main()
 // npx hardhat run scripts/deployMoneyFiFundVault.js --network sepolia
 // npx hardhat run scripts/deployMoneyFiRouter.js --network sepolia
 // npx hardhat run scripts/deployMoneyFiCrossChainRouter.js --network sepolia
-// npx hardhat run scripts/deployMoneyFiTokenLp.js --network sepolia
+// npx hardhat run scripts/tokens/deployMoneyFiTokenLp.js --network sepolia
 // npx hardhat run scripts/deployMoneyFiReferral.js --network sepolia
 // npx hardhat run scripts/deployMoneyFiUniSwap.js --network sepolia
 // npx hardhat run scripts/deployMoneyFiStartegyUpgradeableAerodrome.js --network sepolia

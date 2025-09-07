@@ -1,5 +1,5 @@
 const { ethers } = require("hardhat");
-const { saveAddress } = require("./contractAddresses");
+const { saveAddress } = require("../contractAddresses");
 
 async function main() {
     const [deployer] = await ethers.getSigners();

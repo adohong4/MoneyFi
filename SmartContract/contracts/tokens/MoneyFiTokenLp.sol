@@ -22,6 +22,7 @@ contract MoneyFiTokenLp is ERC20Upgradeable, UUPSUpgradeable, DefaultAccessContr
     }
     /// @dev Disable initializers.
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }

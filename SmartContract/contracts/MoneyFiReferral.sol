@@ -23,18 +23,24 @@ contract MoneyFiReferral is
                                 USER-FACING STORAGE
     //////////////////////////////////////////////////////////////////////////*/
     address public signer;
-    address remainTo;
+    address public remainTo; // Thêm public để tương thích với hợp đồng cũ
     uint256 public nonce;
-    bool public isActive = true;
+    bool public isActive; // Bỏ giá trị khởi tạo mặc định
     IERC20 public token;
 
-    constructor(address signer_, address remainTo_, address admin_, address token_) {
-        __Pausable_init(); // Khởi tạo Pausable
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers(); // Vô hiệu hóa initializer trong constructor
+    }
+
+    function initialize(address signer_, address remainTo_, address admin_, address token_) external initializer {
+        __Pausable_init();
         __ReentrancyGuard_init();
+        __DefaultAccessControlEnumerable_init(admin_);
         signer = signer_;
         remainTo = remainTo_;
         token = IERC20(token_);
-        __DefaultAccessControlEnumerable_init(admin_);
+        isActive = true;
     }
 
     /*////////////////////////////////////////////////////////////////////////// 
