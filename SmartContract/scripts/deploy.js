@@ -148,6 +148,6 @@ main()
 // npx hardhat run scripts/deployMoneyFiCrossChainRouter.js --network sepolia
 // npx hardhat run scripts/tokens/deployMoneyFiTokenLp.js --network sepolia
 // npx hardhat run scripts/deployMoneyFiReferral.js --network sepolia
-// npx hardhat run scripts/deployMoneyFiUniSwap.js --network sepolia
+// npx hardhat run scripts/dex/deployMoneyFiUniSwap.js --network sepolia
 // npx hardhat run scripts/deployMoneyFiStartegyUpgradeableAerodrome.js --network sepolia
 // npx hardhat run scripts/configureContracts.js --network sepolia

@@ -1,11 +1,13 @@
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
 
+// npx hardhat test test/checkRole.test.js --network sepolia 
+
 describe("MoneyFiController Role Tests", function () {
     let moneyFiController;
     let deployer;
     let otherAccount;
-    const proxyAddress = "0xd1284978E84bd254BA444d2Bbdea8ee05fAD8DF9"; // Deployed MoneyFiController address
+    const proxyAddress = "0x6B73f05356ea463220B5AE1aC56cd4C98270E8aB"; // Deployed MoneyFiController address
     const deployerAddress = "0x335145400C12958600C0542F9180e03B917F7BbB"; // Deployer address
     const otherAddress = "0x1234567890123456789012345678901234567890"; // Placeholder address for testing
 

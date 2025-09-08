@@ -1,5 +1,6 @@
 const { ethers, upgrades } = require("hardhat");
 const { saveAddress, getAddresses } = require("../contractAddresses");
+require("dotenv").config();
 
 async function main() {
     const [deployer] = await ethers.getSigners();

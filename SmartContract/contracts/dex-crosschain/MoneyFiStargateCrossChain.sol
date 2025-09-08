@@ -47,6 +47,7 @@ contract MoneyFiStargateCrossChain is
     /// @dev Mapping guid => originMessage => isTransfer
     mapping(bytes32 guid => mapping(bytes originMessage => bool isTransfer)) public isTransferToFunVaultLzComposeAlert;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
