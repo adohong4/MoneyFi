@@ -105,6 +105,41 @@
       "address": "0x7A0DCb2EF26992D3BC5e69AeF5670548Ec22B1C2",
       "txHash": "0xde76dfd34535efa11d533c7db03e7e0ad50c8114796b2b808508f871f7522803",
       "kind": "transparent"
+    },
+    {
+      "address": "0x753109801c9d1B2fF6B69B632d4aBF6064FC489E",
+      "txHash": "0xc6acc4604eafe65a288fb41a5798de1e7526c10e84953eff7c2e5cd961545731",
+      "kind": "uups"
+    },
+    {
+      "address": "0x9818061E69CDcEE03Bc05D125121abe2e6443639",
+      "txHash": "0x6a7ee2b457e4d1e62aa6f6e1f5eec1b20b146d9eb14a25920afbd2d7c8a6cd28",
+      "kind": "uups"
+    },
+    {
+      "address": "0xc9fb98df97385d00E59c69eb54C8B9716711B84b",
+      "txHash": "0xfb25f3c477666c115c4c98b235d5e36e8ea50604708e93e35e5fbc5a133062ae",
+      "kind": "uups"
+    },
+    {
+      "address": "0xd885A2aFf2EE5C2B6b7a7736e6f4aBCaE721244a",
+      "txHash": "0x27fc642acc5507aa69e19a5a20772874e7752cfb626df51c7e76ce20b6ae58e8",
+      "kind": "uups"
+    },
+    {
+      "address": "0x7d66cE2d182f58e5477043a0B805ED3D52af5f7a",
+      "txHash": "0x1171309a93e321d33a95e7f5a7b0e02cb2fcb5d1b4159e87e63c9758a3077e62",
+      "kind": "uups"
+    },
+    {
+      "address": "0x0bb55d254faD85aacf7b35571d11DC0fed1780c4",
+      "txHash": "0x381d8afaf8c412085c3f95c7328221f769308aaf531d0126c4166c72ff7c94bf",
+      "kind": "transparent"
+    },
+    {
+      "address": "0xc55156145e5e445F492AC65a563Ac347A07a017a",
+      "txHash": "0xa702af2d02ed44f70aef14742793bc32e582b3fecfa59e838e3471ae29ebcfdf",
+      "kind": "uups"
     }
   ],
   "impls": {
@@ -1467,6 +1502,780 @@
               "label": "_paused",
               "type": "t_bool",
               "src": "@openzeppelin\\contracts-upgradeable\\utils\\PausableUpgradeable.sol:21",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "4df4c59a9ab72ed7d9ac0df1fe4a73ab1c8e51734f36b62a2a57bbc1381f56b9": {
+      "address": "0x2FCFd22a47408A43349A9752Fe2b5270b5337A0d",
+      "txHash": "0xe58438a3469a7728b25ac34b2bd3e79ff0c51d8701b9615f6088a178136a186f",
+      "layout": {
+        "solcVersion": "0.8.26",
+        "storage": [
+          {
+            "label": "moneyFiController",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_contract(IMoneyFiController)13712",
+            "contract": "MoneyFiRouter",
+            "src": "contracts\\MoneyFiRouter.sol:32"
+          },
+          {
+            "label": "moneyFiFundVault",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_contract(IMoneyFiFundVault)14392",
+            "contract": "MoneyFiRouter",
+            "src": "contracts\\MoneyFiRouter.sol:33"
+          },
+          {
+            "label": "lastRequestTimestamp",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MoneyFiRouter",
+            "src": "contracts\\MoneyFiRouter.sol:36"
+          },
+          {
+            "label": "coolDownPeriodWithdrawRequest",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_uint256",
+            "contract": "MoneyFiRouter",
+            "src": "contracts\\MoneyFiRouter.sol:38"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(AddressSet)3137_storage)": {
+            "label": "mapping(bytes32 => struct EnumerableSet.AddressSet)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)26_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessControlEnumerableStorage)166_storage": {
+            "label": "struct AccessControlEnumerableUpgradeable.AccessControlEnumerableStorage",
+            "members": [
+              {
+                "label": "_roleMembers",
+                "type": "t_mapping(t_bytes32,t_struct(AddressSet)3137_storage)",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessControlStorage)36_storage": {
+            "label": "struct AccessControlUpgradeable.AccessControlStorage",
+            "members": [
+              {
+                "label": "_roles",
+                "type": "t_mapping(t_bytes32,t_struct(RoleData)26_storage)",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(AddressSet)3137_storage": {
+            "label": "struct EnumerableSet.AddressSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)2965_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(InitializableStorage)245_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(PausableStorage)396_storage": {
+            "label": "struct PausableUpgradeable.PausableStorage",
+            "members": [
+              {
+                "label": "_paused",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(ReentrancyGuardStorage)460_storage": {
+            "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
+            "members": [
+              {
+                "label": "_status",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(RoleData)26_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Set)2965_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_positions",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_contract(IMoneyFiController)13712": {
+            "label": "contract IMoneyFiController",
+            "numberOfBytes": "20"
+          },
+          "t_contract(IMoneyFiFundVault)14392": {
+            "label": "contract IMoneyFiFundVault",
+            "numberOfBytes": "20"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.ReentrancyGuard": [
+            {
+              "contract": "ReentrancyGuardUpgradeable",
+              "label": "_status",
+              "type": "t_uint256",
+              "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Pausable": [
+            {
+              "contract": "PausableUpgradeable",
+              "label": "_paused",
+              "type": "t_bool",
+              "src": "@openzeppelin\\contracts-upgradeable\\utils\\PausableUpgradeable.sol:21",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.AccessControlEnumerable": [
+            {
+              "contract": "AccessControlEnumerableUpgradeable",
+              "label": "_roleMembers",
+              "type": "t_mapping(t_bytes32,t_struct(AddressSet)3137_storage)",
+              "src": "@openzeppelin\\contracts-upgradeable\\access\\extensions\\AccessControlEnumerableUpgradeable.sol:20",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.AccessControl": [
+            {
+              "contract": "AccessControlUpgradeable",
+              "label": "_roles",
+              "type": "t_mapping(t_bytes32,t_struct(RoleData)26_storage)",
+              "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:62",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.Initializable": [
+            {
+              "contract": "Initializable",
+              "label": "_initialized",
+              "type": "t_uint64",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
+              "offset": 0,
+              "slot": "0"
+            },
+            {
+              "contract": "Initializable",
+              "label": "_initializing",
+              "type": "t_bool",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
+              "offset": 8,
+              "slot": "0"
+            }
+          ]
+        }
+      }
+    },
+    "a03857205d1576cfed01b2c29da1687dbbd7d150a20ed4b487d2fe0aa652fe21": {
+      "address": "0x78E1cDC1bE44EE5Ac49F01135BCad616a1Fb4f55",
+      "txHash": "0x24733a9f77c5fefc514b83f9de0a99fe936dfbf29081320939158d01bdbd5dfc",
+      "layout": {
+        "solcVersion": "0.8.26",
+        "storage": [
+          {
+            "label": "protocolFee",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint256",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:22"
+          },
+          {
+            "label": "nonce",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:23"
+          },
+          {
+            "label": "router",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_address",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:24"
+          },
+          {
+            "label": "crossChainRouter",
+            "offset": 0,
+            "slot": "3",
+            "type": "t_address",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:25"
+          },
+          {
+            "label": "signer",
+            "offset": 0,
+            "slot": "4",
+            "type": "t_address",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:26"
+          },
+          {
+            "label": "hotWallet",
+            "offset": 0,
+            "slot": "5",
+            "type": "t_address",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:27"
+          },
+          {
+            "label": "averageSystemActionFee",
+            "offset": 0,
+            "slot": "6",
+            "type": "t_uint256",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:29"
+          },
+          {
+            "label": "referralFee",
+            "offset": 0,
+            "slot": "7",
+            "type": "t_uint256",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:33"
+          },
+          {
+            "label": "isEnableReferralSignature",
+            "offset": 0,
+            "slot": "8",
+            "type": "t_bool",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:34"
+          },
+          {
+            "label": "tokenInternal",
+            "offset": 0,
+            "slot": "9",
+            "type": "t_mapping(t_address,t_struct(TokenInfo)46619_storage)",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:37"
+          },
+          {
+            "label": "tokenExternal",
+            "offset": 0,
+            "slot": "10",
+            "type": "t_mapping(t_address,t_struct(TokenInfo)46619_storage)",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:40"
+          },
+          {
+            "label": "crossChainSwapInternal",
+            "offset": 0,
+            "slot": "11",
+            "type": "t_mapping(t_address,t_struct(CrossChainParam)46628_storage)",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:43"
+          },
+          {
+            "label": "crossChainSwapExternal",
+            "offset": 0,
+            "slot": "12",
+            "type": "t_mapping(t_address,t_struct(CrossChainParam)46628_storage)",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:47"
+          },
+          {
+            "label": "strategyInternal",
+            "offset": 0,
+            "slot": "13",
+            "type": "t_mapping(t_address,t_struct(Strategy)46642_storage)",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:51"
+          },
+          {
+            "label": "strategyExternal",
+            "offset": 0,
+            "slot": "14",
+            "type": "t_mapping(t_address,t_struct(StrategyExternal)46651_storage)",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:54"
+          },
+          {
+            "label": "dexSwapInternal",
+            "offset": 0,
+            "slot": "15",
+            "type": "t_mapping(t_address,t_struct(InternalSwapParam)46635_storage)",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:57"
+          },
+          {
+            "label": "dexSwapExternal",
+            "offset": 0,
+            "slot": "16",
+            "type": "t_mapping(t_address,t_struct(InternalSwapParam)46635_storage)",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:60"
+          },
+          {
+            "label": "maxPercentLiquidityStrategyToken",
+            "offset": 0,
+            "slot": "17",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:64"
+          },
+          {
+            "label": "maxDepositValueToken",
+            "offset": 0,
+            "slot": "18",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "MoneyFiController",
+            "src": "contracts\\MoneyFiController.sol:67"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_bytes32)dyn_storage": {
+            "label": "bytes32[]",
+            "numberOfBytes": "32"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_bytes32": {
+            "label": "bytes32",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(AddressSet)6838_storage)": {
+            "label": "mapping(bytes32 => struct EnumerableSet.AddressSet)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_struct(RoleData)1411_storage)": {
+            "label": "mapping(bytes32 => struct AccessControlUpgradeable.RoleData)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_bytes32,t_uint256)": {
+            "label": "mapping(bytes32 => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessControlEnumerableStorage)1551_storage": {
+            "label": "struct AccessControlEnumerableUpgradeable.AccessControlEnumerableStorage",
+            "members": [
+              {
+                "label": "_roleMembers",
+                "type": "t_mapping(t_bytes32,t_struct(AddressSet)6838_storage)",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(AccessControlStorage)1421_storage": {
+            "label": "struct AccessControlUpgradeable.AccessControlStorage",
+            "members": [
+              {
+                "label": "_roles",
+                "type": "t_mapping(t_bytes32,t_struct(RoleData)1411_storage)",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(AddressSet)6838_storage": {
+            "label": "struct EnumerableSet.AddressSet",
+            "members": [
+              {
+                "label": "_inner",
+                "type": "t_struct(Set)6666_storage",
+                "offset": 0,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(InitializableStorage)1630_storage": {
+            "label": "struct Initializable.InitializableStorage",
+            "members": [
+              {
+                "label": "_initialized",
+                "type": "t_uint64",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_initializing",
+                "type": "t_bool",
+                "offset": 8,
+                "slot": "0"
+              }
+            ],
+            "numberOfBytes": "32"
+          },
+          "t_struct(RoleData)1411_storage": {
+            "label": "struct AccessControlUpgradeable.RoleData",
+            "members": [
+              {
+                "label": "hasRole",
+                "type": "t_mapping(t_address,t_bool)",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "adminRole",
+                "type": "t_bytes32",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_struct(Set)6666_storage": {
+            "label": "struct EnumerableSet.Set",
+            "members": [
+              {
+                "label": "_values",
+                "type": "t_array(t_bytes32)dyn_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "_positions",
+                "type": "t_mapping(t_bytes32,t_uint256)",
+                "offset": 0,
+                "slot": "1"
+              }
+            ],
+            "numberOfBytes": "64"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint64": {
+            "label": "uint64",
+            "numberOfBytes": "8"
+          },
+          "t_mapping(t_address,t_struct(CrossChainParam)46628_storage)": {
+            "label": "mapping(address => struct MoneyFiControllerType.CrossChainParam)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(InternalSwapParam)46635_storage)": {
+            "label": "mapping(address => struct MoneyFiControllerType.InternalSwapParam)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(Strategy)46642_storage)": {
+            "label": "mapping(address => struct MoneyFiControllerType.Strategy)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(StrategyExternal)46651_storage)": {
+            "label": "mapping(address => struct MoneyFiControllerType.StrategyExternal)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_struct(TokenInfo)46619_storage)": {
+            "label": "mapping(address => struct MoneyFiControllerType.TokenInfo)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_string_storage": {
+            "label": "string",
+            "numberOfBytes": "32"
+          },
+          "t_struct(CrossChainParam)46628_storage": {
+            "label": "struct MoneyFiControllerType.CrossChainParam",
+            "members": [
+              {
+                "label": "name",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "chainId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "typeDex",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "isActive",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(InternalSwapParam)46635_storage": {
+            "label": "struct MoneyFiControllerType.InternalSwapParam",
+            "members": [
+              {
+                "label": "name",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "chainId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "isActive",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(Strategy)46642_storage": {
+            "label": "struct MoneyFiControllerType.Strategy",
+            "members": [
+              {
+                "label": "name",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "chainId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "isActive",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "2"
+              }
+            ],
+            "numberOfBytes": "96"
+          },
+          "t_struct(StrategyExternal)46651_storage": {
+            "label": "struct MoneyFiControllerType.StrategyExternal",
+            "members": [
+              {
+                "label": "underlyingAsset",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "name",
+                "type": "t_string_storage",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "chainId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "isActive",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "3"
+              }
+            ],
+            "numberOfBytes": "128"
+          },
+          "t_struct(TokenInfo)46619_storage": {
+            "label": "struct MoneyFiControllerType.TokenInfo",
+            "members": [
+              {
+                "label": "lpTokenAddress",
+                "type": "t_address",
+                "offset": 0,
+                "slot": "0"
+              },
+              {
+                "label": "minDepositAmount",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "1"
+              },
+              {
+                "label": "decimals",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "2"
+              },
+              {
+                "label": "chainId",
+                "type": "t_uint256",
+                "offset": 0,
+                "slot": "3"
+              },
+              {
+                "label": "isActive",
+                "type": "t_bool",
+                "offset": 0,
+                "slot": "4"
+              }
+            ],
+            "numberOfBytes": "160"
+          }
+        },
+        "namespaces": {
+          "erc7201:openzeppelin.storage.AccessControlEnumerable": [
+            {
+              "contract": "AccessControlEnumerableUpgradeable",
+              "label": "_roleMembers",
+              "type": "t_mapping(t_bytes32,t_struct(AddressSet)6838_storage)",
+              "src": "@openzeppelin\\contracts-upgradeable\\access\\extensions\\AccessControlEnumerableUpgradeable.sol:20",
+              "offset": 0,
+              "slot": "0"
+            }
+          ],
+          "erc7201:openzeppelin.storage.AccessControl": [
+            {
+              "contract": "AccessControlUpgradeable",
+              "label": "_roles",
+              "type": "t_mapping(t_bytes32,t_struct(RoleData)1411_storage)",
+              "src": "@openzeppelin\\contracts-upgradeable\\access\\AccessControlUpgradeable.sol:62",
               "offset": 0,
               "slot": "0"
             }

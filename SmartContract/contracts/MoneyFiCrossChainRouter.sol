@@ -33,6 +33,7 @@ contract MoneyFiCrossChainRouter is
     IMoneyFiFundVault public moneyFiFundVault;
     mapping(address hotWallet => bool isWhiteList) public isWhiteListHotWallet;
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }

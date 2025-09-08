@@ -53,6 +53,7 @@ contract MoneyFiRouter is
         lastRequestTimestamp[msg.sender] = block.timestamp;
     }
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }

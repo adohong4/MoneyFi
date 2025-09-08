@@ -10,6 +10,8 @@ async function main() {
     const fundVaultAddress = addresses.MoneyFiFundVault;
     if (!controllerAddress || !fundVaultAddress)
         throw new Error("MoneyFiController or MoneyFiFundVault not deployed");
+    console.log("Using MoneyFiController at:", controllerAddress);
+    console.log("Using MoneyFiFundVault at:", fundVaultAddress);
 
     const MoneyFiRouter = await ethers.getContractFactory("MoneyFiRouter");
     const router = await upgrades.deployProxy(

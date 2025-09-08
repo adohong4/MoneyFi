@@ -13,7 +13,7 @@ async function main() {
     const MoneyFiTokenLp = await ethers.getContractFactory("MoneyFiTokenLp");
     const tokenLp = await upgrades.deployProxy(
         MoneyFiTokenLp,
-        [fundVaultAddress, deployer.address, "MoneyUSDC", "mUSDC", 18],
+        [fundVaultAddress, deployer.address, "MoneyUSDC", "mUSDC", 6],
         { initializer: "initialize" }
     );
     await tokenLp.waitForDeployment();

@@ -1,6 +1,7 @@
 {
-  "MoneyFiController": "0xd1284978E84bd254BA444d2Bbdea8ee05fAD8DF9",
-  "MoneyFiFundVault": "0x0b8479812A68ee9fa30a7CEE0D2BeF0C9b329bA7",
-  "MoneyFiTokenLp": "0xB160203f4befE76a8Cec259C93C5b915b1de4E85",
-  "MoneyFiReferral": "0x7A0DCb2EF26992D3BC5e69AeF5670548Ec22B1C2"
+  "MoneyFiController": "0xc9fb98df97385d00E59c69eb54C8B9716711B84b",
+  "MoneyFiFundVault": "0xd885A2aFf2EE5C2B6b7a7736e6f4aBCaE721244a",
+  "MoneyFiTokenLp": "0x7d66cE2d182f58e5477043a0B805ED3D52af5f7a",
+  "MoneyFiReferral": "0x0bb55d254faD85aacf7b35571d11DC0fed1780c4",
+  "MoneyFiRouter": "0xc55156145e5e445F492AC65a563Ac347A07a017a"
 }
