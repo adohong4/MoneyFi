@@ -1,6 +1,6 @@
 const { ethers, upgrades } = require("hardhat");
 const { saveAddress, getAddresses } = require("../contractAddresses");
-
+// npx hardhat run scripts/tokens/deployMoneyFiTokenLp.js --network sepolia
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log("Deploying MoneyFiTokenLp with account:", deployer.address);
@@ -20,7 +20,12 @@ async function main() {
     const tokenLpAddress = await tokenLp.getAddress();
     console.log("MoneyFiTokenLp deployed to:", tokenLpAddress);
 
+    const implementationAddress = await upgrades.erc1967.getImplementationAddress(tokenLpAddress);
+    console.log("MoneyFiTokenLp implementation deployed to:", implementationAddress);
+
+    // Lưu địa chỉ
     saveAddress("MoneyFiTokenLp", tokenLpAddress);
+    saveAddress("MoneyFiTokenLp_Implementation", implementationAddress);
 }
 
 main()

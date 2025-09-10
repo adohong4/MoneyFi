@@ -1,6 +1,8 @@
 const { ethers, upgrades } = require("hardhat");
 const { saveAddress, getAddresses } = require("./contractAddresses");
 
+// npx hardhat run scripts/deployMoneyFiRouter.js --network sepolia
+
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log("Deploying MoneyFiRouter with account:", deployer.address);
@@ -23,7 +25,12 @@ async function main() {
     const routerAddress = await router.getAddress();
     console.log("MoneyFiRouter deployed to:", routerAddress);
 
+    const implementationAddress = await upgrades.erc1967.getImplementationAddress(routerAddress);
+    console.log("MoneyFiRouter implementation deployed to:", implementationAddress);
+
+    // Lưu địa chỉ
     saveAddress("MoneyFiRouter", routerAddress);
+    saveAddress("MoneyFiRouter_Implementation", implementationAddress);
 }
 
 main()

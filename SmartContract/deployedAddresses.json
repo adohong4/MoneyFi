@@ -1,10 +1,16 @@
 {
-  "MoneyFiController": "0xc9fb98df97385d00E59c69eb54C8B9716711B84b",
-  "MoneyFiFundVault": "0xd885A2aFf2EE5C2B6b7a7736e6f4aBCaE721244a",
-  "MoneyFiTokenLp": "0x7d66cE2d182f58e5477043a0B805ED3D52af5f7a",
-  "MoneyFiReferral": "0x0bb55d254faD85aacf7b35571d11DC0fed1780c4",
-  "MoneyFiRouter": "0xc55156145e5e445F492AC65a563Ac347A07a017a",
-  "MoneyFiCrossChainRouter": "0xC3f0646F4B7337e7ecCEC813F334D31CBDbd7280",
-  "MoneyFiStargateCrossChain": "0xc4db5d097356a580be24DC4d9Fccd7e9bB90e0A0",
-  "MoneyFiUniSwap": "0x1a185652bC1F56CB460873C36F7Ae0912E56Fbd0"
+  "MoneyFiController": "0x95f26cFAd70874e8e4FAF33B9a65634a44b10078",
+  "MoneyFiController_Implementation": "0x78E1cDC1bE44EE5Ac49F01135BCad616a1Fb4f55",
+  "MoneyFiFundVault": "0xecec15AfAE07feE618D60406a3705945c35C34Cc",
+  "MoneyFiFundVault_Implementation": "0x6260F39b49DBf1E635BFd6ADD83a56Ca3a463776",
+  "MoneyFiTokenLp": "0x88C3e7da67170E731B261475F3eB73f477355f4f",
+  "MoneyFiTokenLp_Implementation": "0x25c3FF5d2E78e2530ce2b9C6C44f4be165b66423",
+  "MoneyFiRouter": "0x2a64f7a1F0fb00d05Da02F37f1Ee0825CfCecb73",
+  "MoneyFiRouter_Implementation": "0x2FCFd22a47408A43349A9752Fe2b5270b5337A0d",
+  "MoneyFiReferral": "0xA567d2536fC0C6a95A19582db98a68Fe5cf21D76",
+  "MoneyFiReferral_Implementation": "0x5c0d0877ff1936A9bad4169da80c695C32ae3a44",
+  "MoneyFiCrossChainRouter": "0xB5C2cFA406Cc99F9164A32EcE5c405e319aBd7eF",
+  "MoneyFiCrossChainRouter_Implementation": "0xc72D726909F74dA71E7f7Cd62348eaE1d10e44EC",
+  "MoneyFiStrategyUpgradeableUniswap": "0xd2F0271dD08C331BdEFf475d7345e3590480e1Cf",
+  "MoneyFiStrategyUpgradeableUniswap_Implementation": "0xC7Cc60F59206526cf5d1cB81964e81243b5CC82B"
 }

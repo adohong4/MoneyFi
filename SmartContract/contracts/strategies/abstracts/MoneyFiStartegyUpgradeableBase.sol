@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.20;
 
-import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { Context } from "@openzeppelin/contracts/utils/Context.sol";
-import { ContextUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IMoneyFiStartegyUpgradeableBase } from "../../interfaces/IMoneyFiStartegyUpgradeableBase.sol";
-import { DefaultAccessControlEnumerable } from "../../security/DefaultAccessControlEnumerable.sol";
-import { MoneyFiERC4626UpgradeableBase } from "./MoneyFiERC4626UpgradeableBase.sol";
-import { StrategyType } from "../../types/StrageryDataType.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IMoneyFiStartegyUpgradeableBase} from "../../interfaces/IMoneyFiStartegyUpgradeableBase.sol";
+import {DefaultAccessControlEnumerable} from "../../security/DefaultAccessControlEnumerable.sol";
+import {MoneyFiERC4626UpgradeableBase} from "./MoneyFiERC4626UpgradeableBase.sol";
+import {StrategyType} from "../../types/StrageryDataType.sol";
 
 abstract contract MoneyFiStartegyUpgradeableBase is
     MoneyFiERC4626UpgradeableBase,
@@ -36,6 +36,7 @@ abstract contract MoneyFiStartegyUpgradeableBase is
                                     CONSTRUCTOR
     //////////////////////////////////////////////////////////////////////////*/
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
@@ -65,10 +66,7 @@ abstract contract MoneyFiStartegyUpgradeableBase is
         address crossChainRouter_,
         string memory name_,
         string memory symbol_
-    )
-        internal
-        onlyInitializing
-    {
+    ) internal onlyInitializing {
         __MoneyFiERC4626UpgradeableBase_init(asset_, name_, symbol_);
         router = router_;
         crossChainRouter = crossChainRouter_;
@@ -107,11 +105,7 @@ abstract contract MoneyFiStartegyUpgradeableBase is
         // assets = accruedAssets
         uint256 assets,
         uint256 shares
-    )
-        internal
-        override
-        onlyRouter
-    {
+    ) internal override onlyRouter {
         // Calculate total accumulate reward of owner
         int256 totalClaimedProfit = int256(assets) + int256(userStrategy[owner].totalWithDraw)
             - int256(userStrategy[owner].totalDeposited) - userStrategy[owner].totalClaimedProfit;
@@ -204,10 +198,10 @@ abstract contract MoneyFiStartegyUpgradeableBase is
     }
 
     /// @inheritdoc IMoneyFiStartegyUpgradeableBase
-    function beforeRebalance() external virtual { }
+    function beforeRebalance() external virtual {}
 
     /// @inheritdoc IMoneyFiStartegyUpgradeableBase
-    function afterRebalance() external virtual { }
+    function afterRebalance() external virtual {}
 
     /// @inheritdoc IMoneyFiStartegyUpgradeableBase
     function getUserProfit(address _userAddress) external view returns (int256 reward) {

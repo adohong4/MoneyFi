@@ -1,6 +1,6 @@
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
-
+// npx hardhat test test/excute/PrintBalance.test.js --network sepolia
 describe("MoneyFi Info Print with Role Checks", function () {
     this.timeout(100000); // Timeout 100 giây để đảm bảo mạng Sepolia không bị lỗi
 

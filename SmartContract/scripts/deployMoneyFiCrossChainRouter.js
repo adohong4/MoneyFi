@@ -1,6 +1,6 @@
 const { ethers, upgrades } = require("hardhat");
 const { saveAddress, getAddresses } = require("./contractAddresses");
-
+// npx hardhat run scripts/deployMoneyFiCrossChainRouter.js --network sepolia
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log("Deploying MoneyFiCrossChainRouter with account:", deployer.address);
@@ -21,7 +21,12 @@ async function main() {
     const crossChainRouterAddress = await crossChainRouter.getAddress();
     console.log("MoneyFiCrossChainRouter deployed to:", crossChainRouterAddress);
 
+    const implementationAddress = await upgrades.erc1967.getImplementationAddress(crossChainRouterAddress);
+    console.log("MoneyFiCrossChainRouter implementation deployed to:", implementationAddress);
+
+    // Lưu địa chỉ
     saveAddress("MoneyFiCrossChainRouter", crossChainRouterAddress);
+    saveAddress("MoneyFiCrossChainRouter_Implementation", implementationAddress);
 }
 
 main()

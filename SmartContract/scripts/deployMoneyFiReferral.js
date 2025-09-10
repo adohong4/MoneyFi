@@ -1,11 +1,11 @@
 const { ethers, upgrades } = require("hardhat");
 const { saveAddress } = require("./contractAddresses");
-
+// npx hardhat run scripts/deployMoneyFiReferral.js --network sepolia
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log("Deploying MoneyFiReferral with account:", deployer.address);
 
-    const tokenAddress = "0xF3F2b4815A58152c9BE53250275e8211163268BA"; // USDT trên Sepolia
+    const tokenAddress = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"; // USDC trên Sepolia
     const MoneyFiReferral = await ethers.getContractFactory("MoneyFiReferral");
     const referral = await upgrades.deployProxy(
         MoneyFiReferral,
@@ -16,7 +16,12 @@ async function main() {
     const referralAddress = await referral.getAddress();
     console.log("MoneyFiReferral deployed to:", referralAddress);
 
+    const implementationAddress = await upgrades.erc1967.getImplementationAddress(referralAddress);
+    console.log("MoneyFiReferral implementation deployed to:", implementationAddress);
+
+    // Lưu địa chỉ
     saveAddress("MoneyFiReferral", referralAddress);
+    saveAddress("MoneyFiReferral_Implementation", implementationAddress);
 }
 
 main()
