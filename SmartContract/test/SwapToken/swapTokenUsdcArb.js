@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 require("dotenv").config();
 
-// npx hardhat run test/swapToken.test.js --network sepolia
+// npx hardhat run test/SwapToken/swapTokenUsdcArb.js --network sepolia
 async function main() {
     const [deployer, user] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
@@ -9,10 +9,10 @@ async function main() {
 
     // Địa chỉ contract và token
     const usdcAddress = process.env.USDC_SEPOLIA_ADDRESS;
-    const wethAddress = "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14";
-    const strategyAddress = process.env.MONEYFI_STRATEGY_UPGRADEABLE_UNISWAP_V2;
-    const uniswapRouter = "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3";
-    const uniswapPair = "0x72e46e15ef83c896de44B1874B4AF7dDAB5b4F74";
+    const arbAddress = process.env.ARB_SEPOLIA_ADDRESS;
+    const strategyAddress = process.env.UNISWAP_V2_USDC_ARB;
+    const uniswapRouter = process.env.UNISWAP_V2_ROUTER;
+    const uniswapPair = "0x78D0b232670d02f12CD294201cd35b724F1ab0Da";
 
     if (!usdcAddress || !strategyAddress) {
         throw new Error("Missing required contract addresses in .env");
@@ -20,7 +20,7 @@ async function main() {
 
     // Kết nối contract
     const usdc = await ethers.getContractAt("IERC20", usdcAddress, deployer);
-    const weth = await ethers.getContractAt("IERC20", wethAddress, deployer);
+    const arb = await ethers.getContractAt("IERC20", arbAddress, deployer);
     const strategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswapV2", strategyAddress, deployer);
     const pair = await ethers.getContractAt("IUniswapV2Pair", uniswapPair, deployer);
     const uniswapRouterContract = await ethers.getContractAt(
@@ -44,8 +44,8 @@ async function main() {
     console.log("USDC allowance for Uniswap Router:", ethers.formatUnits(
         await usdc.allowance(strategyAddress, uniswapRouter), 6
     ));
-    console.log("WETH allowance for Uniswap Router:", ethers.formatUnits(
-        await weth.allowance(strategyAddress, uniswapRouter), 18
+    console.log("ARB allowance for Uniswap Router:", ethers.formatUnits(
+        await arb.allowance(strategyAddress, uniswapRouter), 18
     ));
 
     // Set minimumSwapAmount
@@ -64,17 +64,17 @@ async function main() {
     console.log("\n=== Pool Reserves ===");
     console.log("Pool reserves:", {
         USDC: ethers.formatUnits((await pair.getReserves())[0], 6),
-        WETH: ethers.formatUnits((await pair.getReserves())[1], 18),
+        ARB: ethers.formatUnits((await pair.getReserves())[1], 18),
     });
 
-    // Kiểm tra giá swap USDC → WETH
+    // Kiểm tra giá swap USDC → arb
     console.log("\n=== Checking Swap Price ===");
     const amountIn = ethers.parseUnits("1", 6); // 1 USDC
     let amountOutMin = 0n; // Dùng BigInt
     try {
-        const amountsOut = await uniswapRouterContract.getAmountsOut(amountIn, [usdcAddress, wethAddress]);
+        const amountsOut = await uniswapRouterContract.getAmountsOut(amountIn, [usdcAddress, arbAddress]);
         console.log("amountsOut:", amountsOut.map((a, i) => ethers.formatUnits(a, i === 0 ? 6 : 18)));
-        console.log("Expected WETH for 1 USDC:", ethers.formatUnits(amountsOut[1], 18));
+        console.log("Expected ARB for 1 USDC:", ethers.formatUnits(amountsOut[1], 18));
         // Tính amountOutMin với 0.5% slippage
         amountOutMin = (amountsOut[1] * 9950n) / 10000n;
         console.log("amountOutMin:", ethers.formatUnits(amountOutMin, 18));
@@ -87,7 +87,7 @@ async function main() {
     console.log("\n=== Testing _swapToken with Deployer's USDC ===");
     const swapAmount = ethers.parseUnits("1", 6); // Swap 1 USDC
     console.log(`Strategy USDC balance before swap: ${ethers.formatUnits(await usdc.balanceOf(strategyAddress), 6)} USDC`);
-    console.log(`Strategy WETH balance before swap: ${ethers.formatUnits(await weth.balanceOf(strategyAddress), 18)} WETH`);
+    console.log(`Strategy ARB balance before swap: ${ethers.formatUnits(await arb.balanceOf(strategyAddress), 18)} ARB`);
     console.log(`Deployer USDC balance: ${ethers.formatUnits(await usdc.balanceOf(deployer.address), 6)} USDC`);
 
     try {
@@ -119,7 +119,7 @@ async function main() {
         const swapTx = await uniswapRouterContract.connect(deployer).swapExactTokensForTokens(
             swapAmount,
             amountOutMin,
-            [usdcAddress, wethAddress],
+            [usdcAddress, arbAddress],
             strategyAddress,
             Math.floor(Date.now() / 1000) + 60,
             { gasLimit: 500000 }
@@ -129,7 +129,7 @@ async function main() {
 
         // Kiểm tra balance sau swap
         console.log(`Strategy USDC balance after swap: ${ethers.formatUnits(await usdc.balanceOf(strategyAddress), 6)} USDC`);
-        console.log(`Strategy WETH balance after swap: ${ethers.formatUnits(await weth.balanceOf(strategyAddress), 18)} WETH`);
+        console.log(`Strategy ARB balance after swap: ${ethers.formatUnits(await arb.balanceOf(strategyAddress), 18)} ARB`);
     } catch (e) {
         console.error("Swap failed:", e);
     }
@@ -138,7 +138,7 @@ async function main() {
     console.log("\n=== Pool Reserves Post-Swap ===");
     console.log("Pool reserves post-swap:", {
         USDC: ethers.formatUnits((await pair.getReserves())[0], 6),
-        WETH: ethers.formatUnits((await pair.getReserves())[1], 18),
+        ARB: ethers.formatUnits((await pair.getReserves())[1], 18),
     });
 }
 

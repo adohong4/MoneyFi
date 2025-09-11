@@ -50,6 +50,7 @@ contract MoneyFiStrategyUpgradeableUniswapV2 is
         address uniswapRouter;
         address uniswapFactory;
         uint256 slippageWhenSwapAsset;
+        uint256 minimumSwapAmount;
         string name;
         string symbol;
     }
@@ -87,7 +88,7 @@ contract MoneyFiStrategyUpgradeableUniswapV2 is
         uniswapRouter = params.uniswapRouter;
         uniswapFactory = params.uniswapFactory;
         slippageWhenSwapAsset = params.slippageWhenSwapAsset;
-        minimumSwapAmount = 1e16;
+        minimumSwapAmount = params.minimumSwapAmount;
 
         /// Approve max tokens for Uniswap Router
         ERC20(params.baseToken).safeIncreaseAllowance(params.uniswapRouter, type(uint256).max);

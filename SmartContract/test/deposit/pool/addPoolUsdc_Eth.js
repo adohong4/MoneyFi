@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 require("dotenv").config();
 
-// npx hardhat run test/excute/depositToPool.js --network sepolia
+// npx hardhat run test/deposit/pool/addPoolUsdc_Eth.js --network sepolia
 
 async function main() {
     // Lấy tài khoản

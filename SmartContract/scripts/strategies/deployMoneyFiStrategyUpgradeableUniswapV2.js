@@ -18,6 +18,11 @@ async function main() {
     const router = addresses.MoneyFiRouter;
     const crossChainRouter = addresses.MoneyFiCrossChainRouter;
 
+    const nameParam = "MoneyFi UniswapV2 USDC/WETH";
+    const symbolParam = "MFUWV2";
+    const minimumSwapAmount = ethers.parseUnits("0.01", 6); // 0.01 USDC
+    const slippageWhenSwapAsset = 50; // 0.5% slippage
+
     if (!usdc || !weth || !uniswapRouter || !uniswapFactory || !router || !crossChainRouter) {
         throw new Error("Missing required addresses in .env or contractAddresses");
     }
@@ -31,9 +36,10 @@ async function main() {
         crossChainRouter: crossChainRouter,
         uniswapRouter: uniswapRouter,
         uniswapFactory: uniswapFactory,
-        slippageWhenSwapAsset: 50, // 0.5% slippage (giảm từ 2% để tránh lỗi slippage)
-        name: "MoneyFi UniswapV2 USDC/WETH",
-        symbol: "MFUWV2",
+        slippageWhenSwapAsset: slippageWhenSwapAsset,
+        minimumSwapAmount: minimumSwapAmount,
+        name: nameParam,
+        symbol: symbolParam,
     };
 
     // Deploy proxy
