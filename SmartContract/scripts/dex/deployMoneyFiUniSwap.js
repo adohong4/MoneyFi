@@ -3,12 +3,11 @@ const { ethers, upgrades } = require("hardhat");
 const { saveAddress } = require("../contractAddresses");
 require("dotenv").config();
 
+// npx hardhat run scripts/dex/deployMoneyFiUniSwap.js --network sepolia
+
 async function main() {
     const [deployer] = await ethers.getSigners();
     console.log("Deploying MoneyFiUniSwap with account:", deployer.address);
-
-    const balance = await ethers.provider.getBalance(deployer.address);
-    console.log("Account balance:", ethers.formatEther(balance), "ETH");
 
     const uniswapV3Router = process.env.UNISWAP_V3_ROUTER;
     const uniswapV2Router = process.env.UNISWAP_V2_ROUTER;
@@ -32,7 +31,11 @@ async function main() {
     const uniSwapAddress = await uniSwap.getAddress();
     console.log("MoneyFiUniSwap deployed to (proxy):", uniSwapAddress);
 
-    saveAddress("MoneyFiUniSwap", uniSwapAddress);
+    const implementationAddress = await upgrades.erc1967.getImplementationAddress(uniSwapAddress);
+    console.log("MoneyFiUniswap implementation deployed to:", implementationAddress);
+
+    saveAddress("MoneyFiUniswap", uniSwapAddress);
+    saveAddress("MoneyFiUniSwap_implementation", implementationAddress);
 }
 
 main().catch((error) => {

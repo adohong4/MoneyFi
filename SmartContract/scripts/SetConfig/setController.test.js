@@ -20,47 +20,65 @@ async function main() {
     console.log(`Is ${deployer.address} delegate admin? ${isDelegateAdmin}`);
 
     // 2. Set Router
-    try {
-        const txRouter = await moneyFiController.connect(deployer).setRouter(addresses.MoneyFiRouter);
-        await txRouter.wait();
-        console.log("Set Router address:", addresses.MoneyFiRouter);
-    } catch (error) {
-        console.error("Failed to set Router:", error.message);
-    }
+    // try {
+    //     const txRouter = await moneyFiController.connect(deployer).setRouter(addresses.MoneyFiRouter);
+    //     await txRouter.wait();
+    //     console.log("Set Router address:", addresses.MoneyFiRouter);
+    // } catch (error) {
+    //     console.error("Failed to set Router:", error.message);
+    // }
 
-    // 3. Set CrossChainRouter
-    try {
-        const txCrossChainRouter = await moneyFiController.connect(deployer).setCrossChainRouter(addresses.MoneyFiCrossChainRouter);
-        await txCrossChainRouter.wait();
-        console.log("Set CrossChainRouter address:", addresses.MoneyFiCrossChainRouter);
-    } catch (error) {
-        console.error("Failed to set CrossChainRouter:", error.message);
-    }
+    // // 3. Set CrossChainRouter
+    // try {
+    //     const txCrossChainRouter = await moneyFiController.connect(deployer).setCrossChainRouter(addresses.MoneyFiCrossChainRouter);
+    //     await txCrossChainRouter.wait();
+    //     console.log("Set CrossChainRouter address:", addresses.MoneyFiCrossChainRouter);
+    // } catch (error) {
+    //     console.error("Failed to set CrossChainRouter:", error.message);
+    // }
 
     // 4. Set Strategy Internal (Uniswap Strategy)
+    // try {
+    //     const txStrategy = await moneyFiController.connect(deployer).setStrategyInternal(
+    //         addresses.UniswapV2_UNI_LINK,
+    //         {
+    //             name: "UniswapV2 UNI/LINK",
+    //             chainId: 11155111, // Sepolia chain ID
+    //             isActive: true,
+    //         }
+    //     );
+    //     await txStrategy.wait();
+    //     console.log("Set StrategyInternal for Uniswap Strategy");
+    // } catch (error) {
+    //     console.error("Failed to set StrategyInternal:", error.message);
+    // }
+
+    // 5. Set Dex Internal (Uniswap Dex)
     try {
-        const txStrategy = await moneyFiController.connect(deployer).setStrategyInternal(
-            addresses.MoneyFiStrategyUpgradeableUniswapV2,
+        const txDex = await moneyFiController.connect(deployer).setDexInternalSwap(
             {
-                name: "UniswapV2 Strategy",
+                name: "Dex Uniswap",
                 chainId: 11155111, // Sepolia chain ID
                 isActive: true,
-            }
+            },
+            addresses.MoneyFiUniswap
         );
-        await txStrategy.wait();
-        console.log("Set StrategyInternal for Uniswap Strategy");
+        await txDex.wait();
+        console.log("Set DexInternal for Uniswap ");
     } catch (error) {
-        console.error("Failed to set StrategyInternal:", error.message);
+        console.error("Failed to set DexInternal:", error.message);
     }
 
-    // 5. Xác minh lại các thiết lập
+    // 6. Xác minh lại các thiết lập
     console.log("\nVerifying configurations...");
     const routerAddress = await moneyFiController.router();
     console.log("Router address:", routerAddress);
     const crossChainRouterAddress = await moneyFiController.crossChainRouter();
     console.log("CrossChainRouter address:", crossChainRouterAddress);
-    const isStrategyActive = await moneyFiController.isStrategyInternalActive(addresses.MoneyFiStrategyUpgradeableUniswapV2);
+    const isStrategyActive = await moneyFiController.isStrategyInternalActive(addresses.UniswapV2_UNI_LINK);
     console.log("Is Uniswap Strategy Active:", isStrategyActive);
+    const isDexActive = await moneyFiController.isDexSwapInternalActive(addresses.MoneyFiUniswap);
+    console.log("Is Uniswap Dex Active:", isDexActive);
 }
 
 main()

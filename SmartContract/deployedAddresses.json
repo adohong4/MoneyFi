@@ -17,6 +17,8 @@
   "MoneyFiStrategyUpgradeableUniswapV2_Implementation": "0x7126Cc955919c5557fe0aE47Bb48f36E1Fc6b67d",
   "UniswapV2_USDC_ARB": "0x9524e890bbB7Fe2CE4B63fcfC493F6523FEFa76d",
   "UniswapV2_USDC_ARB_Implementation": "0x06E131B6F6e71d86D7002bc53124b0E18f937085",
-  "MoneyFiStrategyUpgradeableUniswapV2_1": "0xdb93C4ABd0eb0fDdeF7796B6Dbf5064Dd8f3D1b1",
-  "MoneyFiStrategyUpgradeableUniswapV2_Implementation_1": "0x6A81b5C847E214D4C29BcD9aC824cF23F3f80102"
+  "UniswapV2_UNI_LINK": "0xCC6C99b5450344005fdD5487Ef52c952B8BBc535",
+  "UniswapV2_UNI_LINK_Implementation": "0x06E131B6F6e71d86D7002bc53124b0E18f937085",
+  "MoneyFiUniswap": "0x9e475785B661c274553954689F7Dd07D09dfDDe4",
+  "MoneyFiUniSwap_implementation": "0x6F50Cf4eFCE119210A4312FC61678703c1E85edB"
 }
