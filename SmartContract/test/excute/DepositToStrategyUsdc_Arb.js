@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 require("dotenv").config();
 
-// npx hardhat run test/excute/testDepositToStrategy.test.js --network sepolia
+// npx hardhat run test/excute/DepositToStrategyUsdc_Arb.js --network sepolia
 async function main() {
     const [deployer, user] = await ethers.getSigners();
     console.log(`Deployer address: ${deployer.address}`);
@@ -11,12 +11,19 @@ async function main() {
     const fundVaultAddress = process.env.MONEYFI_FUND_VAULT;
     const usdcAddress = process.env.USDC_SEPOLIA_ADDRESS;
     const wethAddress = process.env.WETH_SEPOLIA_ADDRESS;
-    const strategyAddress = process.env.MONEYFI_STRATEGY_UPGRADEABLE_UNISWAP;
+    const arbAddress = process.env.ARB_SEPOLIA_ADDRESS;
+
+    // strategy address list
+    const strategyAddress = process.env.MONEYFI_STRATEGY_UPGRADEABLE_UNISWAP_V2;
+    const strategyAddressUsdcWEth = process.env.UNISWAP_V2_USDC_WETH;
+    const strategyAddressUsdcArb = process.env.UNISWAP_V2_USDC_ARB;
+
+
     const tokenLpAddress = process.env.MONEYFI_TOKEN_LP;
     const pairAddress = "0x72e46e15ef83c896de44B1874B4AF7dDAB5b4F74";
     const controllerAddress = process.env.MONEYFI_CONTROLLER;
 
-    if (!usdcAddress || !strategyAddress || !routerAddress || !fundVaultAddress || !tokenLpAddress || !controllerAddress) {
+    if (!usdcAddress || !strategyAddressUsdcArb || !routerAddress || !fundVaultAddress || !tokenLpAddress || !controllerAddress) {
         throw new Error("Missing required contract addresses in .env");
     }
 
@@ -26,9 +33,7 @@ async function main() {
     const fundVault = await ethers.getContractAt("MoneyFiFundVault", fundVaultAddress, deployer);
     const usdc = await ethers.getContractAt("IERC20", usdcAddress, deployer);
     const weth = await ethers.getContractAt("IERC20", wethAddress, deployer);
-    const strategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswap", strategyAddress, deployer);
-    console.log("Strategy address:", strategy);
-
+    const strategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswap", strategyAddressUsdcArb, deployer);
     const tokenLp = await ethers.getContractAt("MoneyFiTokenLp", tokenLpAddress, deployer);
     const pair = await ethers.getContractAt("IUniswapV2Pair", pairAddress, deployer);
     const controller = await ethers.getContractAt("MoneyFiController", controllerAddress, deployer);
@@ -80,11 +85,11 @@ async function main() {
     }
 
     // Kiểm tra cấu hình strategy
-    const isActive = await controller.isStrategyInternalActive(strategyAddress);
+    const isActive = await controller.isStrategyInternalActive(strategyAddressUsdcArb);
     console.log(`Strategy active? ${isActive}`);
     if (!isActive) {
         console.log("Activating strategy...");
-        await controller.connect(deployer).addStrategy(strategyAddress);
+        await controller.connect(deployer).addStrategy(strategyAddressUsdcArb);
     }
 
     const underlyingAsset = await strategy.asset();
@@ -106,10 +111,10 @@ async function main() {
 
     // Tham số deposit
     const depositParam = {
-        strategyAddress: strategyAddress,
+        strategyAddress: strategyAddressUsdcArb,
         depositor: user.address,
         depositedTokenAddress: usdcAddress,
-        amount: ethers.parseUnits("2", 6),
+        amount: ethers.parseUnits("1", 6),
         distributionFee: ethers.parseUnits("0.0", 6),
         externalCallData: ethers.getBytes("0x"),
     };
@@ -136,9 +141,9 @@ async function main() {
 
     // Thêm vào cuối script test
     console.log("Post-deposit balances:");
-    console.log("Strategy USDC balance:", ethers.formatUnits(await usdc.balanceOf(strategyAddress), 6));
-    console.log("Strategy WETH balance:", ethers.formatUnits(await weth.balanceOf(strategyAddress), 18)); // weth=0xfFf99...
-    console.log("Strategy LP balance:", ethers.formatUnits(await pair.balanceOf(strategyAddress), 18));
+    console.log("Strategy USDC balance:", ethers.formatUnits(await usdc.balanceOf(strategyAddressUsdcArb), 6));
+    console.log("Strategy ARB balance:", ethers.formatUnits(await weth.balanceOf(strategyAddressUsdcArb), 18));
+    console.log("Strategy LP balance:", ethers.formatUnits(await pair.balanceOf(strategyAddressUsdcArb), 18));
     console.log("Pool reserves post:", {
         USDC: ethers.formatUnits(await pair.token0() === usdcAddress ? (await pair.getReserves())[0] : (await pair.getReserves())[1], 6),
         WETH: ethers.formatUnits(await pair.token0() !== usdcAddress ? (await pair.getReserves())[0] : (await pair.getReserves())[1], 18)

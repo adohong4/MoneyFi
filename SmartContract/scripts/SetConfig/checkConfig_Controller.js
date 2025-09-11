@@ -72,12 +72,28 @@ async function main() {
     console.log("Is Token Support Internal Active (USDC):", isTokenSupportInternalActive);
 
     // 13. Kiểm tra Strategy Internal (Uniswap Strategy)
+    console.log("==============================================================");
     const strategyInternal = await moneyFiController.strategyInternal(addresses.MoneyFiStrategyUpgradeableUniswap);
     console.log("Strategy Internal (Uniswap Strategy):");
     console.log("  name:", strategyInternal.name);
     console.log("  chainId:", strategyInternal.chainId.toString());
     console.log("  isActive:", strategyInternal.isActive);
     console.log("Is Strategy Internal Active:", await moneyFiController.isStrategyInternalActive(addresses.MoneyFiStrategyUpgradeableUniswap));
+
+    const strategyInternalETH = await moneyFiController.strategyInternal(addresses.MoneyFiStrategyUpgradeableUniswapV2);
+    console.log("Strategy Internal (Uniswap Strategy V2):");
+    console.log("  name:", strategyInternalETH.name);
+    console.log("  chainId:", strategyInternalETH.chainId.toString());
+    console.log("  isActive:", strategyInternalETH.isActive);
+    console.log("Is Strategy Internal ETH:", await moneyFiController.isStrategyInternalActive(addresses.MoneyFiStrategyUpgradeableUniswapV2));
+
+    const strategyInternalARB = await moneyFiController.strategyInternal(addresses.UniswapV2_USDC_ARB);
+    console.log("Strategy Internal (Uniswap Strategy USDC/ ARB):");
+    console.log("  name:", strategyInternalARB.name);
+    console.log("  chainId:", strategyInternalARB.chainId.toString());
+    console.log("  isActive:", strategyInternalARB.isActive);
+    console.log("Is Strategy Internal ARB:", await moneyFiController.isStrategyInternalActive(addresses.UniswapV2_USDC_ARB));
+    console.log("==============================================================");
 
     // 14. Kiểm tra Strategy External (Uniswap Strategy)
     const strategyExternal = await moneyFiController.strategyExternal(addresses.MoneyFiStrategyUpgradeableUniswap);

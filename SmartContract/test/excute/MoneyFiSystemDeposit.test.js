@@ -10,7 +10,7 @@ describe("MoneyFi Deposit Test", function () {
     let deployer, user;
     let moneyFiRouter, moneyFiFundVault, moneyFiTokenLp, moneyFiController, usdc;
     const USDC_ADDRESS = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"; // Địa chỉ USDC trên Sepolia
-    const TOKEN_LP_ADDRESS = "0x0bF168574B7C35d7C688217b27b51B075143619b"; // Thay bằng địa chỉ MoneyFiTokenLp mới
+    const TOKEN_LP_ADDRESS = "0x88C3e7da67170E731B261475F3eB73f477355f4f"; // Thay bằng địa chỉ MoneyFiTokenLp mới
     const AMOUNT_TO_DEPOSIT = ethers.parseUnits("5", 6); // 1 USDC (6 decimals)
 
     before(async function () {
@@ -22,12 +22,12 @@ describe("MoneyFi Deposit Test", function () {
         // Kết nối tới các contract đã deploy
         moneyFiRouter = await ethers.getContractAt(
             "MoneyFiRouter",
-            "0x0547610eb12965a24529d08ee1Cb1Eb8b6FC0664",
+            "0x2a64f7a1F0fb00d05Da02F37f1Ee0825CfCecb73",
             deployer
         );
         moneyFiFundVault = await ethers.getContractAt(
             "MoneyFiFundVault",
-            "0xBa9D02b2560ef5364FA5c8B2E479cEaDA8b68Ca1",
+            "0xecec15AfAE07feE618D60406a3705945c35C34Cc",
             deployer
         );
         moneyFiTokenLp = await ethers.getContractAt(
@@ -37,7 +37,7 @@ describe("MoneyFi Deposit Test", function () {
         );
         moneyFiController = await ethers.getContractAt(
             "MoneyFiController",
-            "0xB3f3a2D10BA3cfFd7aea35dEbB374ec692396448",
+            "0x95f26cFAd70874e8e4FAF33B9a65634a44b10078",
             deployer
         );
         usdc = await ethers.getContractAt("IERC20", USDC_ADDRESS, deployer);

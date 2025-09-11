@@ -40,9 +40,9 @@ async function main() {
     // 4. Set Strategy Internal (Uniswap Strategy)
     try {
         const txStrategy = await moneyFiController.connect(deployer).setStrategyInternal(
-            addresses.MoneyFiStrategyUpgradeableUniswap,
+            addresses.MoneyFiStrategyUpgradeableUniswapV2,
             {
-                name: "Uniswap Strategy",
+                name: "UniswapV2 Strategy",
                 chainId: 11155111, // Sepolia chain ID
                 isActive: true,
             }
@@ -59,7 +59,7 @@ async function main() {
     console.log("Router address:", routerAddress);
     const crossChainRouterAddress = await moneyFiController.crossChainRouter();
     console.log("CrossChainRouter address:", crossChainRouterAddress);
-    const isStrategyActive = await moneyFiController.isStrategyInternalActive(addresses.MoneyFiStrategyUpgradeableUniswap);
+    const isStrategyActive = await moneyFiController.isStrategyInternalActive(addresses.MoneyFiStrategyUpgradeableUniswapV2);
     console.log("Is Uniswap Strategy Active:", isStrategyActive);
 }
 

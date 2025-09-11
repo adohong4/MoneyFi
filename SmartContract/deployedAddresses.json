@@ -12,5 +12,11 @@
   "MoneyFiCrossChainRouter": "0xB5C2cFA406Cc99F9164A32EcE5c405e319aBd7eF",
   "MoneyFiCrossChainRouter_Implementation": "0xc72D726909F74dA71E7f7Cd62348eaE1d10e44EC",
   "MoneyFiStrategyUpgradeableUniswap": "0xd2F0271dD08C331BdEFf475d7345e3590480e1Cf",
-  "MoneyFiStrategyUpgradeableUniswap_Implementation": "0xC7Cc60F59206526cf5d1cB81964e81243b5CC82B"
+  "MoneyFiStrategyUpgradeableUniswap_Implementation": "0xC7Cc60F59206526cf5d1cB81964e81243b5CC82B",
+  "MoneyFiStrategyUpgradeableUniswapV2": "0xAFE224801f88A36958D0Ea49704E920aD35AaDf2",
+  "MoneyFiStrategyUpgradeableUniswapV2_Implementation": "0x7126Cc955919c5557fe0aE47Bb48f36E1Fc6b67d",
+  "UniswapV2_USDC_ARB": "0x9524e890bbB7Fe2CE4B63fcfC493F6523FEFa76d",
+  "UniswapV2_USDC_ARB_Implementation": "0x06E131B6F6e71d86D7002bc53124b0E18f937085",
+  "MoneyFiStrategyUpgradeableUniswapV2_1": "0xdb93C4ABd0eb0fDdeF7796B6Dbf5064Dd8f3D1b1",
+  "MoneyFiStrategyUpgradeableUniswapV2_Implementation_1": "0x6A81b5C847E214D4C29BcD9aC824cF23F3f80102"
 }

@@ -1,5 +1,6 @@
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
+require("dotenv").config();
 
 
 // npx hardhat test test/excute/userDepositFundVault.js --network sepolia
@@ -9,9 +10,9 @@ describe("MoneyFi Deposit Test", function () {
 
     let deployer, user;
     let moneyFiRouter, moneyFiFundVault, moneyFiTokenLp, moneyFiController, usdc;
-    const USDC_ADDRESS = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"; // Địa chỉ USDC trên Sepolia
-    const TOKEN_LP_ADDRESS = "0x0bF168574B7C35d7C688217b27b51B075143619b"; // Thay bằng địa chỉ MoneyFiTokenLp mới
-    const AMOUNT_TO_DEPOSIT = ethers.parseUnits("1", 6); // 1 USDC (6 decimals)
+    const USDC_ADDRESS = process.env.USDC_SEPOLIA_ADDRESS; // Địa chỉ USDC trên Sepolia
+    const TOKEN_LP_ADDRESS = process.env.MONEYFI_TOKEN_LP; // Thay bằng địa chỉ MoneyFiTokenLp mới
+    const AMOUNT_TO_DEPOSIT = ethers.parseUnits("10", 6); //  USDC (6 decimals)
 
     before(async function () {
         // Lấy tài khoản
@@ -22,12 +23,12 @@ describe("MoneyFi Deposit Test", function () {
         // Kết nối tới các contract đã deploy
         moneyFiRouter = await ethers.getContractAt(
             "MoneyFiRouter",
-            "0x0547610eb12965a24529d08ee1Cb1Eb8b6FC0664",
+            process.env.MONEYFI_ROUTER,
             deployer
         );
         moneyFiFundVault = await ethers.getContractAt(
             "MoneyFiFundVault",
-            "0xBa9D02b2560ef5364FA5c8B2E479cEaDA8b68Ca1",
+            process.env.MONEYFI_FUND_VAULT,
             deployer
         );
         moneyFiTokenLp = await ethers.getContractAt(
@@ -37,7 +38,7 @@ describe("MoneyFi Deposit Test", function () {
         );
         moneyFiController = await ethers.getContractAt(
             "MoneyFiController",
-            "0xB3f3a2D10BA3cfFd7aea35dEbB374ec692396448",
+            process.env.MONEYFI_CONTROLLER,
             deployer
         );
         usdc = await ethers.getContractAt("IERC20", USDC_ADDRESS, deployer);

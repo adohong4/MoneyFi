@@ -10,6 +10,10 @@ async function checkPool() {
     );
     const pair = await factory.getPair(process.env.USDC_SEPOLIA_ADDRESS, process.env.WETH_SEPOLIA_ADDRESS);
     console.log("USDC/WETH pool from factory:", pair);
+
+    const USDCARB = await factory.getPair(process.env.USDC_SEPOLIA_ADDRESS, process.env.ARB_SEPOLIA_ADDRESS);
+    console.log("USDC/ARB pool from factory:", USDCARB);
+
 }
 
 checkPool()
