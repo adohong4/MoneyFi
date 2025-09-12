@@ -6,6 +6,7 @@ async function main() {
     const [deployer] = await ethers.getSigners();
     const addresses = getAddresses();
     const USDC_ADDRESS = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
+    const UNI_ADDRESS = "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"
 
     const moneyFiController = await ethers.getContractAt(
         "MoneyFiController",
@@ -96,11 +97,11 @@ async function main() {
     console.log("==============================================================");
 
     // 14. Kiểm tra Strategy External (Uniswap Strategy)
-    const strategyExternal = await moneyFiController.strategyExternal(addresses.MoneyFiStrategyUpgradeableUniswap);
-    console.log("Strategy External (Uniswap Strategy):");
-    console.log("  underlyingAsset:", strategyExternal.underlyingAsset, strategyExternal.underlyingAsset === USDC_ADDRESS ? "(Correct)" : "(Incorrect)");
-    console.log("  isActive:", strategyExternal.isActive);
-    console.log("Is Strategy External Active:", await moneyFiController.isStrategyExternalActive(addresses.MoneyFiStrategyUpgradeableUniswap));
+    const strategyInternal2 = await moneyFiController.strategyInternal(addresses.UniswapV2_UNI_LINK);
+    console.log("Strategy Internal (Uniswap Strategy):");
+    console.log("  underlyingAsset:", strategyInternal2.underlyingAsset, strategyInternal2.underlyingAsset === UNI_ADDRESS ? "(Correct)" : "(Incorrect)");
+    console.log("  isActive:", strategyInternal2.isActive);
+    console.log("Is Strategy Internal Active:", await moneyFiController.isStrategyInternalActive(addresses.MoneyFiStrategyUpgradeableUniswapV2));
 
     // 15. Kiểm tra Max Percent Liquidity Strategy (USDC)
     const maxPercentLiquidity = await moneyFiController.maxPercentLiquidityStrategyToken(USDC_ADDRESS);
@@ -109,6 +110,12 @@ async function main() {
     // 16. Kiểm tra Max Deposit Value (USDC)
     const maxDepositValue = await moneyFiController.maxDepositValueToken(USDC_ADDRESS);
     console.log("Max Deposit Value (USDC):", ethers.formatUnits(maxDepositValue, 6), "USDC");
+
+    // kiem tra Dex Address Internal
+    const dexSwapInternal = await moneyFiController.dexSwapInternal(addresses.MoneyFiUniswap);
+    console.log("Dex Swap Internal (MoneyFiUniswap):");
+    console.log("  isActive:", dexSwapInternal.isActive);
+    console.log("Is Dex Swap Internal Active:", await moneyFiController.isDexSwapInternalActive(addresses.MoneyFiUniswap));
 
     // 17. Kiểm tra Valid Underlying Asset Strategy External
     const isValidUnderlyingAsset = await moneyFiController.isValidUnderlyingAssetStrategyExternal(

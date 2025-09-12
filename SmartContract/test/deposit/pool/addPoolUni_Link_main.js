@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 require("dotenv").config();
 
-// npx hardhat run test/deposit/pool/addPoolUsdc_Arb.js --network sepolia
+// npx hardhat run test/deposit/pool/addPoolUni_Link_main.js --network sepolia
 async function main() {
     // Lấy tài khoản
     const [deployer, user] = await ethers.getSigners();
@@ -12,14 +12,16 @@ async function main() {
     const routerAddress = process.env.MONEYFI_ROUTER;
     const fundVaultAddress = process.env.MONEYFI_FUND_VAULT;
     const usdcAddress = process.env.USDC_SEPOLIA_ADDRESS;
-    const arbAddress = process.env.ARB_SEPOLIA_ADDRESS; // ARB trên Sepolia
-    const strategyAddress = process.env.UNISWAP_V2_USDC_ARB;
+    const uniAddress = process.env.UNI_SEPOLIA_ADDRESS; // UNI trên Sepolia
+    const linkAddress = process.env.LINK_SEPOLIA_ADDRESS; // LINK trên Sepolia
+    const strategyAddress = process.env.UNISWAP_V2_UNI_LINK;
     const tokenLpAddress = process.env.MONEYFI_TOKEN_LP;
-    const pairAddress = "0x78D0b232670d02f12CD294201cd35b724F1ab0Da"; // USDC/ARB pair
+    const pairAddress = "0x92EB24051e224576dF0562e6E2606e2F14e067d1"; // uni/link pair
     const controllerAddress = process.env.MONEYFI_CONTROLLER;
+    const swapContractAddress = process.env.UNISWAP_DEX_ADDRESS;
 
     // Kiểm tra biến môi trường
-    if (!usdcAddress || !arbAddress || !strategyAddress || !routerAddress || !fundVaultAddress || !tokenLpAddress || !controllerAddress) {
+    if (!usdcAddress || !strategyAddress || !routerAddress || !fundVaultAddress || !tokenLpAddress || !controllerAddress) {
         throw new Error("Missing required contract addresses in .env");
     }
 
@@ -27,7 +29,8 @@ async function main() {
     const router = await ethers.getContractAt("MoneyFiRouter", routerAddress, deployer);
     const fundVault = await ethers.getContractAt("MoneyFiFundVault", fundVaultAddress, deployer);
     const usdc = await ethers.getContractAt("IERC20", usdcAddress, deployer);
-    const arb = await ethers.getContractAt("IERC20", arbAddress, deployer);
+
+
     const strategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswapV2", strategyAddress, deployer);
     const tokenLp = await ethers.getContractAt("MoneyFiTokenLp", tokenLpAddress, deployer);
     const pair = await ethers.getContractAt("IUniswapV2Pair", pairAddress, deployer);
@@ -51,25 +54,12 @@ async function main() {
         externalCallData: ethers.getBytes("0x"),
     };
     const swapTokenParam = {
-        swapContract: "0x0000000000000000000000000000000000000000",
-        amountOutMin: 0,
-        externalCallData: ethers.getBytes("0x"),
+        swapContract: swapContractAddress,
+        amountOutMin: ethers.parseUnits("0.000001", 6),
         isV3: false,
+        externalCallData: ethers.getBytes("0x"),
     };
 
-    // Kiểm tra depositParam
-    if (depositParam.strategyAddress === ethers.ZeroAddress) {
-        throw new Error("Invalid strategy address");
-    }
-    if (depositParam.depositor === ethers.ZeroAddress) {
-        throw new Error("Invalid depositor address");
-    }
-    if (depositParam.depositedTokenAddress === ethers.ZeroAddress) {
-        throw new Error("Invalid deposited token address");
-    }
-    if (depositParam.amount <= 0) {
-        throw new Error("Deposit amount must be greater than 0");
-    }
     const avgFee = await controller.averageSystemActionFee();
     console.log(`Average system action fee: ${ethers.formatUnits(avgFee, 6)} USDC`);
     if (depositParam.distributionFee > avgFee) {
@@ -124,21 +114,18 @@ async function main() {
         throw new Error("Strategy is not active in MoneyFiController");
     }
     const underlyingAsset = await strategy.asset();
+
     console.log(`Strategy underlying asset: ${underlyingAsset}`);
-    if (underlyingAsset.toLowerCase() !== usdcAddress.toLowerCase()) {
+    if (underlyingAsset.toLowerCase() !== uniAddress.toLowerCase()) {
         throw new Error("Strategy underlying asset does not match USDC");
     }
 
     // 7. Kiểm tra pool reserves
     const [reserve0, reserve1] = await pair.getReserves();
     console.log("Pool reserves before deposit:", {
-        USDC: ethers.formatUnits(reserve0, await pair.token0() === usdcAddress ? 6 : 18),
-        ARB: ethers.formatUnits(reserve1, await pair.token0() === usdcAddress ? 18 : 6),
+        UNI: ethers.formatUnits(reserve0, await pair.token0() === usdcAddress ? 18 : 18),
+        LINK: ethers.formatUnits(reserve1, await pair.token0() === usdcAddress ? 18 : 18),
     });
-
-    // 8. Kiểm tra pool TVL để tránh lỗi chia cho 0
-    const poolTVL = await strategy.totalLiquidWhitelistPool();
-    console.log(`Pool TVL: ${ethers.formatUnits(poolTVL, 18)}`);
 
     // 8. Thực hiện deposit
     console.log("=================================================================");
@@ -163,8 +150,8 @@ async function main() {
 
     const [reserve0After, reserve1After] = await pair.getReserves();
     console.log("Pool reserves after deposit:", {
-        USDC: ethers.formatUnits(reserve0After, await pair.token0() === usdcAddress ? 6 : 18),
-        ARB: ethers.formatUnits(reserve1After, await pair.token0() === usdcAddress ? 18 : 6),
+        UNI: ethers.formatUnits(reserve0After, await pair.token0() === usdcAddress ? 18 : 18),
+        LINK: ethers.formatUnits(reserve1After, await pair.token0() === usdcAddress ? 18 : 18),
     });
 
     const updatedDepositInfo = await fundVault.getUserDepositInfor(usdcAddress, user.address);

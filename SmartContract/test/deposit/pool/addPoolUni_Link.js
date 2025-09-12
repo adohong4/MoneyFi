@@ -5,24 +5,24 @@ require("dotenv").config();
 async function main() {
     // Lấy tài khoản
     const [deployer, user] = await ethers.getSigners();
-    console.log(`Deployer address: ${deployer.address}`);
-    console.log(`User address: ${user.address}`);
+    console.log(`Địa chỉ Deployer: ${deployer.address}`);
+    console.log(`Địa chỉ User: ${user.address}`);
 
-    // Địa chỉ hợp đồng từ .env
+    // Địa chỉ hợp đồng từ .env và hard-coded
     const routerAddress = process.env.MONEYFI_ROUTER;
     const fundVaultAddress = process.env.MONEYFI_FUND_VAULT;
     const usdcAddress = process.env.USDC_SEPOLIA_ADDRESS;
     const uniAddress = process.env.UNI_SEPOLIA_ADDRESS;
     const linkAddress = process.env.LINK_SEPOLIA_ADDRESS;
     const strategyAddress = process.env.UNISWAP_V2_UNI_LINK; // Strategy UNI/LINK đã deploy
-    const tokenLpAddress = process.env.MONEYFI_TOKEN_LP;
     const pairAddress = "0x92EB24051e224576dF0562e6E2606e2F14e067d1"; // UNI/LINK pair
     const controllerAddress = process.env.MONEYFI_CONTROLLER;
-    const uniswapRouterAddress = process.env.UNISWAP_V2_ROUTER;
+    const moneyFiUniSwapAddress = process.env.UNISWAP_DEX_ADDRESS; // Địa chỉ MoneyFiUniSwap
+    const tokenLpAddress = process.env.MONEYFI_TOKEN_LP;
 
     // Kiểm tra biến môi trường
-    if (!usdcAddress || !uniAddress || !linkAddress || !strategyAddress || !routerAddress || !fundVaultAddress || !tokenLpAddress || !controllerAddress || !uniswapRouterAddress) {
-        throw new Error("Missing required contract addresses in .env");
+    if (!usdcAddress || !uniAddress || !linkAddress || !strategyAddress || !routerAddress || !fundVaultAddress || !controllerAddress || !tokenLpAddress) {
+        throw new Error("Thiếu địa chỉ hợp đồng trong file .env");
     }
 
     // Kết nối hợp đồng
@@ -32,60 +32,65 @@ async function main() {
     const uni = await ethers.getContractAt("IERC20", uniAddress, deployer);
     const link = await ethers.getContractAt("IERC20", linkAddress, deployer);
     const strategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswapV2", strategyAddress, deployer);
-    const tokenLp = await ethers.getContractAt("MoneyFiTokenLp", tokenLpAddress, deployer);
     const pair = await ethers.getContractAt("IUniswapV2Pair", pairAddress, deployer);
     const controller = await ethers.getContractAt("MoneyFiController", controllerAddress, deployer);
+    const moneyFiUniSwap = await ethers.getContractAt("MoneyFiUniSwap", moneyFiUniSwapAddress, deployer);
+    const tokenLp = await ethers.getContractAt("MoneyFiTokenLp", tokenLpAddress, deployer);
 
-    // Kiểm tra uniswapPair trong strategy
+    // Kiểm tra cấu hình strategy
     const strategyPair = await strategy.uniswapPair();
-    console.log(`Uniswap pair in strategy: ${strategyPair}`);
+    console.log(`Địa chỉ Uniswap Pair trong Strategy: ${strategyPair}`);
     if (strategyPair.toLowerCase() !== pairAddress.toLowerCase()) {
-        throw new Error(`Strategy uniswapPair (${strategyPair}) does not match pool address (${pairAddress}). Cần deploy lại strategy.`);
+        throw new Error(`Uniswap Pair của Strategy (${strategyPair}) không khớp với địa chỉ pool (${pairAddress})`);
     }
 
-    // Kiểm tra baseToken và quoteToken
     const baseToken = await strategy.baseToken();
     const quoteToken = await strategy.quoteToken();
-    console.log(`Base token: ${baseToken}, Quote token: ${quoteToken}`);
+    console.log(`Base Token: ${baseToken}, Quote Token: ${quoteToken}`);
     if (baseToken.toLowerCase() !== uniAddress.toLowerCase() || quoteToken.toLowerCase() !== linkAddress.toLowerCase()) {
-        throw new Error("Strategy baseToken or quoteToken does not match UNI/LINK");
+        throw new Error("BaseToken hoặc QuoteToken của Strategy không khớp với UNI/LINK");
     }
+
+    // Kiểm tra slippage và minimum swap amount
+    const slippage = await strategy.slippageWhenSwapAsset();
+    console.log(`Slippage: ${(Number(slippage) / 10000) * 100}%`);
+    const minimumSwapAmount = await strategy.minimumSwapAmount();
+    console.log(`Minimum Swap Amount: ${ethers.formatUnits(minimumSwapAmount, 18)} UNI`);
 
     // 1. Kiểm tra dữ liệu đầu vào
     const amount = ethers.parseUnits("1", 6); // 1 USDC
     const depositParam = {
         strategyAddress: strategyAddress,
         depositor: user.address,
-        depositedTokenAddress: usdcAddress, // FundVault sử dụng USDC
+        depositedTokenAddress: usdcAddress, // Token deposit là USDC
         amount: amount,
-        distributionFee: ethers.parseUnits("0.0", 6),
+        distributionFee: ethers.parseUnits("0.0", 6), // Phí phân phối = 0
         externalCallData: ethers.getBytes("0x"),
     };
+
+    // Tính amountOutMin cho swap USDC -> UNI
+    const uniswapRouter = await ethers.getContractAt(
+        "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol:IUniswapV2Router02",
+        await moneyFiUniSwap.routerV2(),
+        deployer
+    );
+    const pathUsdcToUni = [usdcAddress, uniAddress];
+    const amountsOutUsdcToUni = await uniswapRouter.getAmountsOut(amount, pathUsdcToUni);
+    const amountOutMinUni = (amountsOutUsdcToUni[1] * (BigInt(10000) - BigInt(slippage))) / BigInt(10000); // Áp dụng slippage
+    console.log(`Dự kiến nhận tối thiểu: ${ethers.formatUnits(amountOutMinUni, 18)} UNI`);
+
     const swapTokenParam = {
-        swapContract: uniswapRouterAddress, // Uniswap V2 Router
-        amountOutMin: 0, // Có thể tính amountOutMin dựa trên slippage
-        externalCallData: ethers.encodeBytes32String(""), // Có thể cần mã hóa path nếu cần
+        swapContract: moneyFiUniSwapAddress, // Sử dụng MoneyFiUniSwap để swap
+        amountOutMin: amountOutMinUni,
+        externalCallData: ethers.getBytes("0x"),
         isV3: false, // Sử dụng Uniswap V2
     };
 
-    // Kiểm tra depositParam
-    if (depositParam.strategyAddress === ethers.ZeroAddress) {
-        throw new Error("Invalid strategy address");
-    }
-    if (depositParam.depositor === ethers.ZeroAddress) {
-        throw new Error("Invalid depositor address");
-    }
-    if (depositParam.depositedTokenAddress === ethers.ZeroAddress) {
-        throw new Error("Invalid deposited token address");
-    }
-    if (depositParam.amount <= 0) {
-        throw new Error("Deposit amount must be greater than 0");
-    }
     const avgFee = await controller.averageSystemActionFee();
-    console.log(`Average system action fee: ${ethers.formatUnits(avgFee, 6)} USDC`);
+    console.log(`Phí hệ thống trung bình: ${ethers.formatUnits(avgFee, 18)} UNI`);
     if (depositParam.distributionFee > avgFee) {
         throw new Error(
-            `Distribution fee (${ethers.formatUnits(depositParam.distributionFee, 6)} USDC) exceeds average system action fee (${ethers.formatUnits(avgFee, 6)} USDC)`
+            `Phí phân phối (${ethers.formatUnits(depositParam.distributionFee, 6)} USDC) vượt quá phí hệ thống trung bình (${ethers.formatUnits(avgFee, 18)} UNI)`
         );
     }
 
@@ -95,122 +100,134 @@ async function main() {
     const isVaultPaused = await fundVault.paused();
     console.log(`MoneyFiFundVault paused? ${isVaultPaused}`);
     if (isRouterPaused || isVaultPaused) {
-        console.log("Unpausing contracts...");
+        console.log("Đang bỏ tạm dừng hợp đồng...");
         if (isRouterPaused) {
             await router.connect(deployer).unpause();
-            console.log("Unpaused MoneyFiRouter");
+            console.log("Đã bỏ tạm dừng MoneyFiRouter");
             await new Promise((resolve) => setTimeout(resolve, 5000));
         }
         if (isVaultPaused) {
             await fundVault.connect(deployer).unpause();
-            console.log("Unpaused MoneyFiFundVault");
+            console.log("Đã bỏ tạm dừng MoneyFiFundVault");
             await new Promise((resolve) => setTimeout(resolve, 5000));
         }
     }
 
     // 3. Kiểm tra số dư USDC trong FundVault của user
     const userDepositInfo = await fundVault.getUserDepositInfor(usdcAddress, user.address);
-    console.log("User Deposit Info before deposit:");
-    console.log("  Original Deposit Amount:", ethers.formatUnits(userDepositInfo.originalDepositAmount, 6), "USDC");
-    console.log("  Current Deposit Amount:", ethers.formatUnits(userDepositInfo.currentDepositAmount, 6), "USDC");
+    console.log("Thông tin deposit của user trước khi thêm thanh khoản:");
+    console.log("  Số dư gốc:", ethers.formatUnits(userDepositInfo.originalDepositAmount, 6), "USDC");
+    console.log("  Số dư hiện tại:", ethers.formatUnits(userDepositInfo.currentDepositAmount, 6), "USDC");
     if (userDepositInfo.currentDepositAmount < amount) {
-        throw new Error("Insufficient USDC balance in FundVault for user");
+        throw new Error("User không đủ USDC trong FundVault");
     }
 
     // 4. Kiểm tra số dư USDC của FundVault
     const fundVaultUsdcBalance = await usdc.balanceOf(fundVaultAddress);
-    console.log("FundVault USDC balance before deposit:", ethers.formatUnits(fundVaultUsdcBalance, 6), "USDC");
+    console.log("FundVault USDC balance trước khi deposit:", ethers.formatUnits(fundVaultUsdcBalance, 6), "USDC");
     if (fundVaultUsdcBalance < amount) {
-        throw new Error("Insufficient USDC balance in FundVault");
+        throw new Error("FundVault không đủ USDC");
     }
 
     // 5. Kiểm tra allowance của FundVault cho Router
     const allowance = await usdc.allowance(fundVaultAddress, routerAddress);
-    console.log(`Allowance of FundVault for Router: ${ethers.formatUnits(allowance, 6)} USDC`);
+    console.log(`Allowance của FundVault cho Router: ${ethers.formatUnits(allowance, 6)} USDC`);
     if (allowance < amount) {
-        console.log("Approving USDC for Router...");
-        await usdc.connect(deployer).approve(routerAddress, ethers.MaxUint256);
-        console.log("Approved USDC for Router");
+        console.log(`Phê duyệt ${ethers.formatUnits(amount, 6)} USDC cho Router...`);
+        await usdc.connect(deployer).approve(routerAddress, ethers.MaxUint256, { gasLimit: 100000 });
+        console.log("Phê duyệt thành công");
     }
 
-    // 6. Kiểm tra cấu hình strategy
+    // 6. Kiểm tra trạng thái strategy
     const isStrategyActive = await controller.isStrategyInternalActive(strategyAddress);
     console.log(`Strategy active? ${isStrategyActive}`);
     if (!isStrategyActive) {
-        throw new Error("Strategy is not active in MoneyFiController");
+        throw new Error("Strategy không hoạt động trong MoneyFiController");
     }
     const underlyingAsset = await strategy.asset();
     console.log(`Strategy underlying asset: ${underlyingAsset}`);
     if (underlyingAsset.toLowerCase() !== uniAddress.toLowerCase()) {
-        throw new Error("Strategy underlying asset does not match UNI");
+        throw new Error("Strategy underlying asset không khớp với UNI");
     }
 
     // 7. Kiểm tra pool reserves
     const [reserve0, reserve1] = await pair.getReserves();
     const token0 = await pair.token0();
-    console.log("Pool reserves before deposit:", {
-        UNI: ethers.formatUnits(token0 === uniAddress ? reserve0 : reserve1, 18),
-        LINK: ethers.formatUnits(token0 === uniAddress ? reserve1 : reserve0, 18),
+    const isUniToken0 = token0.toLowerCase() === uniAddress.toLowerCase();
+    console.log("Dự trữ pool trước khi deposit:", {
+        UNI: ethers.formatUnits(isUniToken0 ? reserve0 : reserve1, 18),
+        LINK: ethers.formatUnits(isUniToken0 ? reserve1 : reserve0, 18),
     });
 
-    // 8. Tính toán amountOutMin cho swap USDC -> UNI
-    const uniswapRouter = await ethers.getContractAt(
-        "contracts/interfaces/externals/uniswap/IUniswapV2Router02.sol:IUniswapV2Router02",
-        uniswapRouterAddress,
-        deployer
-    );
-    const path = [usdcAddress, uniAddress];
-    const amountsOut = await uniswapRouter.getAmountsOut(amount, path);
-    const amountOutMin = ethers.BigNumber.from(amountsOut[1])
-        .mul(ethers.BigNumber.from(10000).sub(ethers.BigNumber.from(slippage)))
-        .div(ethers.BigNumber.from(10000)); // Sử dụng slippage từ strategy
-    console.log(`Expected UNI out (min): ${ethers.formatUnits(amountOutMin, 18)} UNI`);
+    // 8. Kiểm tra pool TVL để tránh lỗi chia cho 0
+    const poolTVL = await strategy.totalLiquidWhitelistPool();
+    console.log(`Pool TVL: ${ethers.formatUnits(poolTVL, 18)}`);
+    if (poolTVL == 0) {
+        console.log("Cảnh báo: Pool TVL bằng 0, có thể gây lỗi trong validateDistributeFundToStrategy");
+        // Tùy chọn: Thêm thanh khoản vào pool UNI/LINK
+        console.log("Thêm thanh khoản vào pool UNI/LINK...");
+        const amountADesired = ethers.parseUnits("100", 18); // 100 UNI
+        const amountBDesired = ethers.parseUnits("100", 18); // 100 LINK
+        await uni.connect(deployer).approve(uniswapRouter.address, amountADesired);
+        await link.connect(deployer).approve(uniswapRouter.address, amountBDesired);
+        const addLiquidityTx = await uniswapRouter.addLiquidity(
+            uniAddress,
+            linkAddress,
+            amountADesired,
+            amountBDesired,
+            0,
+            0,
+            deployer.address,
+            Math.floor(Date.now() / 1000) + 60,
+            { gasLimit: 500000 }
+        );
+        await addLiquidityTx.wait();
+        console.log("Đã thêm thanh khoản vào pool UNI/LINK");
+    }
 
-    // Cập nhật swapTokenParam với amountOutMin
-    swapTokenParam.amountOutMin = amountOutMin;
 
-    // 9. Thực hiện deposit
+    // 10. Thực hiện deposit
     console.log("=================================================================");
-    console.log("Deployer depositing 1 USDC to Strategy UNI/LINK for user...");
+    console.log("Deployer đang deposit 1 USDC vào Strategy cho user...");
     try {
         const depositTx = await router
             .connect(deployer)
             .depositFundToStrategySameChainFromOperator(depositParam, swapTokenParam, { gasLimit: 1000000 });
         await depositTx.wait();
-        console.log("Deposit successful, tx:", depositTx.hash);
+        console.log("Deposit thành công, tx:", depositTx.hash);
     } catch (error) {
-        console.error("Deposit failed:", error);
+        console.error("Deposit thất bại:", error.message);
         throw error;
     }
 
-    // 10. Kiểm tra sau deposit
+    // 11. Kiểm tra sau deposit
     const shares = await strategy.balanceOf(user.address);
-    console.log("User shares in Strategy:", ethers.formatUnits(shares, 18));
+    console.log("Shares của user trong Strategy:", ethers.formatUnits(shares, 18));
 
     const totalAssets = await strategy.totalAssets();
-    console.log("Total assets in Strategy:", ethers.formatUnits(totalAssets, 18), "UNI");
+    console.log("Tổng tài sản trong Strategy:", ethers.formatUnits(totalAssets, 18), "UNI");
 
     const [reserve0After, reserve1After] = await pair.getReserves();
-    console.log("Pool reserves after deposit:", {
-        UNI: ethers.formatUnits(token0 === uniAddress ? reserve0After : reserve1After, 18),
-        LINK: ethers.formatUnits(token0 === uniAddress ? reserve1After : reserve0After, 18),
+    console.log("Dự trữ pool sau khi thêm thanh khoản:", {
+        UNI: ethers.formatUnits(isUniToken0 ? reserve0After : reserve1After, 18),
+        LINK: ethers.formatUnits(isUniToken0 ? reserve1After : reserve0After, 18),
     });
 
     const updatedDepositInfo = await fundVault.getUserDepositInfor(usdcAddress, user.address);
-    console.log("User Deposit Info after deposit:");
-    console.log("  Original Deposit Amount:", ethers.formatUnits(updatedDepositInfo.originalDepositAmount, 6), "USDC");
-    console.log("  Current Deposit Amount:", ethers.formatUnits(updatedDepositInfo.currentDepositAmount, 6), "USDC");
+    console.log("Thông tin deposit của user sau khi thêm thanh khoản:");
+    console.log("  Số dư gốc:", ethers.formatUnits(updatedDepositInfo.originalDepositAmount, 6), "USDC");
+    console.log("  Số dư hiện tại:", ethers.formatUnits(updatedDepositInfo.currentDepositAmount, 6), "USDC");
 
     const updatedLpBalance = await tokenLp.balanceOf(user.address);
-    console.log("User mUSDC balance after deposit:", ethers.formatUnits(updatedLpBalance, 6), "mUSDC");
+    console.log("Số dư mUSDC của user sau khi thêm thanh khoản:", ethers.formatUnits(updatedLpBalance, 6), "mUSDC");
 
     const distributeFee = await fundVault.distributeFee(usdcAddress);
-    console.log("Distribute Fee in FundVault:", ethers.formatUnits(distributeFee, 6), "USDC");
+    console.log("Phí phân phối trong FundVault:", ethers.formatUnits(distributeFee, 6), "USDC");
 }
 
 main()
     .then(() => process.exit(0))
     .catch((error) => {
-        console.error("Error:", error);
+        console.error("Lỗi:", error.message);
         process.exit(1);
     });
