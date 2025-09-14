@@ -14,6 +14,9 @@ async function checkPool() {
     const pairMoi = await factory.getPair(process.env.UNI_SEPOLIA_ADDRESS, process.env.LINK_SEPOLIA_ADDRESS);
     console.log("Uni/Link pool from factory:", pairMoi);
 
+    const pairUsdcArb = await factory.getPair(process.env.USDC_SEPOLIA_ADDRESS, process.env.ARB_SEPOLIA_ADDRESS);
+    console.log("USDC/ARB pool from factory:", pairUsdcArb);
+
 }
 
 checkPool()

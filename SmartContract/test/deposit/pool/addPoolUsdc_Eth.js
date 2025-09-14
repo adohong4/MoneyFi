@@ -28,7 +28,7 @@ async function main() {
     const router = await ethers.getContractAt("MoneyFiRouter", routerAddress, deployer);
     const fundVault = await ethers.getContractAt("MoneyFiFundVault", fundVaultAddress, deployer);
     const usdc = await ethers.getContractAt("IERC20", usdcAddress, deployer);
-    const strategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswap", strategyAddress, deployer);
+    const strategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswapV2", strategyAddress, deployer);
     const tokenLp = await ethers.getContractAt("MoneyFiTokenLp", tokenLpAddress, deployer);
     const pair = await ethers.getContractAt("IUniswapV2Pair", pairAddress, deployer);
     const controller = await ethers.getContractAt("MoneyFiController", controllerAddress, deployer);

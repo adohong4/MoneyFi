@@ -29,8 +29,6 @@ async function main() {
     const router = await ethers.getContractAt("MoneyFiRouter", routerAddress, deployer);
     const fundVault = await ethers.getContractAt("MoneyFiFundVault", fundVaultAddress, deployer);
     const usdc = await ethers.getContractAt("IERC20", usdcAddress, deployer);
-    const uni = await ethers.getContractAt("IERC20", uniAddress, deployer);
-    const link = await ethers.getContractAt("IERC20", linkAddress, deployer);
     const strategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswapV2", strategyAddress, deployer);
     const pair = await ethers.getContractAt("IUniswapV2Pair", pairAddress, deployer);
     const controller = await ethers.getContractAt("MoneyFiController", controllerAddress, deployer);
@@ -162,29 +160,6 @@ async function main() {
     // 8. Kiểm tra pool TVL để tránh lỗi chia cho 0
     const poolTVL = await strategy.totalLiquidWhitelistPool();
     console.log(`Pool TVL: ${ethers.formatUnits(poolTVL, 18)}`);
-    if (poolTVL == 0) {
-        console.log("Cảnh báo: Pool TVL bằng 0, có thể gây lỗi trong validateDistributeFundToStrategy");
-        // Tùy chọn: Thêm thanh khoản vào pool UNI/LINK
-        console.log("Thêm thanh khoản vào pool UNI/LINK...");
-        const amountADesired = ethers.parseUnits("100", 18); // 100 UNI
-        const amountBDesired = ethers.parseUnits("100", 18); // 100 LINK
-        await uni.connect(deployer).approve(uniswapRouter.address, amountADesired);
-        await link.connect(deployer).approve(uniswapRouter.address, amountBDesired);
-        const addLiquidityTx = await uniswapRouter.addLiquidity(
-            uniAddress,
-            linkAddress,
-            amountADesired,
-            amountBDesired,
-            0,
-            0,
-            deployer.address,
-            Math.floor(Date.now() / 1000) + 60,
-            { gasLimit: 500000 }
-        );
-        await addLiquidityTx.wait();
-        console.log("Đã thêm thanh khoản vào pool UNI/LINK");
-    }
-
 
     // 10. Thực hiện deposit
     console.log("=================================================================");
