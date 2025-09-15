@@ -68,26 +68,71 @@ class AccountService {
     }
 
     static getAllUserPagination = async (req, res) => {
+        try {
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const skip = (page - 1) * limit;
 
+            const users = await accountModel.find({ isActive: true })
+                .sort({ balance: -1 })
+                .skip(skip)
+                .limit(limit)
+                .exec();
+
+            const totalUser = await accountModel.countDocuments({ isActive: true });
+            const totalPages = Math.ceil(totalUser / limit);
+
+            return {
+                metadata: {
+                    users,
+                    currentPage: page,
+                    totalPages,
+                    totalUser,
+                    limit
+                }
+            };
+        } catch (error) {
+            throw error;
+        }
     }
 
     static searchUserPagination = async (req, res) => {
         try {
+            const { search } = req.query;
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const skip = (page - 1) * limit;
 
-        } catch (error) {
-            throw new BadRequestError(error);
-        }
-    }
+            // filter
+            let filter = { isActive: true };
+            if (search) {
+                filter.$or = [
+                    { userAddress: { $regex: search, $options: "i" } },
+                    { invitationCode: { $regex: search, $options: "i" } },
+                    { referralCode: { $regex: search, $options: "i" } }
+                ];
+            }
 
-    static getAllAccount = async () => {
-        try {
-            const account = await accountModel.find()
-                .select('username email role address cartData')
-                .sort({ createdAt: -1 })
+            const users = await accountModel.find(filter)
+                .sort({ balance: -1 })
+                .skip(skip)
+                .limit(limit)
                 .exec();
-            return { metadata: account }
+
+            const totalUsers = await accountModel.countDocuments(filter);
+            const totalPages = Math.ceil(totalUsers / limit);
+
+            return {
+                metadata: {
+                    users,
+                    currentPage: page,
+                    totalPages,
+                    totalUsers,
+                    limit
+                }
+            };
         } catch (error) {
-            throw new BadRequestError(error);
+            throw error;
         }
     }
 }

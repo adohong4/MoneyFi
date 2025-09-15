@@ -39,6 +39,32 @@ class UserController {
             next(error);
         }
     }
+
+    getAllUserPagination = async (req, res, next) => {
+        try {
+            const result = await userService.getAllUserPagination(req, res);
+            new OK({
+                message: 'Get All User',
+                metadata: result.metadata
+            }).send(res)
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    searchUserPagination = async (req, res, next) => {
+        try {
+            const result = await userService.searchUserPagination(req, res);
+            new OK({
+                message: 'Successful Searching',
+                metadata: result.metadata
+            }).send(res)
+        } catch (error) {
+            next(error);
+        }
+    }
+
+
 }
 
 module.exports = new UserController();
