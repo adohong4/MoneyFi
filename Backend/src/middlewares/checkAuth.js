@@ -1,7 +1,7 @@
 'use strict'
 const jwt = require('jsonwebtoken')
 const { Types } = require('mongoose');
-const { asyncHandler } = require('../helpers/asyncHandler')
+const { asyncHandler } = require('../helpers/asyncHandlers')
 
 const authMiddleware = asyncHandler(async (req, res, next) => {
     const { token } = req.headers;
