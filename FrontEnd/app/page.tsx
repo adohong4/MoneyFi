@@ -73,6 +73,7 @@ export default function DeFiDashboard() {
               {/* Left Column - Deposit/Withdraw Panel */}
               <div className="lg:col-span-1 space-y-6">
                 <DepositWithdrawPanel />
+                <ReferralSystem />
               </div>
 
               {/* Middle Column - Charts and Stats */}
@@ -83,7 +84,7 @@ export default function DeFiDashboard() {
               {/* Right Column - Leaderboard and Referrals */}
               <div className="lg:col-span-1 space-y-6">
                 <UserLeaderboard />
-                <ReferralSystem />
+
               </div>
             </div>
           </div>

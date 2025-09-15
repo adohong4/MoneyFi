@@ -10,6 +10,7 @@ import { Copy, Share2, Users } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useAccount } from "wagmi"
 import { api } from "@/lib/api"
+import { refApiService } from "@/services/referral.api"
 
 export function ReferralSystem() {
   const { address } = useAccount()
@@ -21,13 +22,13 @@ export function ReferralSystem() {
   })
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    if (address) {
-      // Generate referral code from address (first 6 chars + last 4 chars)
-      const code = `${address.slice(2, 8).toUpperCase()}${address.slice(-4).toUpperCase()}`
-      setReferralCode(code)
-    }
-  }, [address])
+  // useEffect(() => {
+  //   if (address) {
+  //     // Generate referral code from address (first 6 chars + last 4 chars)
+  //     const code = `${address.slice(2, 8).toUpperCase()}${address.slice(-4).toUpperCase()}`
+  //     setReferralCode(code)
+  //   }
+  // }, [address])
 
   useEffect(() => {
     const fetchReferralStats = async () => {
@@ -35,10 +36,13 @@ export function ReferralSystem() {
 
       setLoading(true)
       try {
-        const userData = await api.saveUserAddress(address) // This also returns user data
+        const userInfo = await refApiService.getUserInfor(address)
+
+        setReferralCode(userInfo.invitationCode)  // This also returns user data
+
         setReferralStats({
-          referrals: userData.referredUsers,
-          earnings: userData.referralEarnings,
+          referrals: 0,
+          earnings: 0,
         })
       } catch (error) {
         console.error("Error fetching referral stats:", error)

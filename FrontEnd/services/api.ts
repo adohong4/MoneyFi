@@ -17,17 +17,30 @@ export interface StatsData {
 export class ApiService {
   private baseUrl: string
 
-  constructor(baseUrl = "") {
+  constructor(baseUrl = "http://localhost:4001/v1/api") {
     this.baseUrl = baseUrl
   }
 
-  async deposit(data: DepositData): Promise<any> {
+  async connectWallet(userAddress: string, invitationCode: string): Promise<any> {
+    console.log("address: ", userAddress)
+    console.log("invitationCode: ", invitationCode)
+    const response = await fetch(`${this.baseUrl}${API_ENDPOINTS.connectWallet}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userAddress, invitationCode }),
+    })
+    return response.json()
+  }
+
+  async deposit(userAddress: string, amount: number): Promise<any> {
     const response = await fetch(`${this.baseUrl}${API_ENDPOINTS.deposits}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ userAddress, amount }),
     })
     return response.json()
   }

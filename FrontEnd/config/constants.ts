@@ -6,11 +6,17 @@ export const APP_CONFIG = {
 }
 
 export const API_ENDPOINTS = {
-  deposits: "/api/deposits",
+  connectWallet: "/user/connectWallet",
+  deposits: "/user/deposit",
+  userInfor: "/user/infor",
   withdrawals: "/api/withdrawals",
   stats: "/api/stats",
   leaderboard: "/api/leaderboard",
   referrals: "/api/referrals",
+}
+
+export const REFERRAL_API_ENDPOINTS = {
+  referralRank: "/referral/getRank"
 }
 
 export const CONTRACT_ADDRESSES = {

@@ -147,6 +147,9 @@ export class ContractService {
     try {
       console.log(`[v0] Depositing ${amount} USDC for ${userAddress}`)
 
+      const approveTx = await this.approveUSDC(amount.toString()) // truyền "9.55"
+      await approveTx.wait()
+
       // 2. Deposit to fund
       const depositTx = await this.depositFund(amount.toString()) // truyền "9.55"
       await depositTx.wait()

@@ -5,11 +5,32 @@ import { useWeb3Modal } from "@web3modal/wagmi/react"
 import { useAccount, useDisconnect } from "wagmi"
 import { Wallet, LogOut } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { apiService } from "@/services/api"
+import { useEffect } from "react"
 
 export function WalletConnect() {
   const { open } = useWeb3Modal()
   const { address, isConnected } = useAccount()
   const { disconnect } = useDisconnect()
+
+  useEffect(() => {
+    const callConnectAPI = async () => {
+      if (isConnected && address) {
+        try {
+          // nếu có referral code trong URL thì lấy ra
+          const urlParams = new URLSearchParams(window.location.search)
+          const invitationCode = urlParams.get("ref") || ""
+          console.log("address: ", address)
+          console.log("invitationCode: ", invitationCode)
+          const res = await apiService.connectWallet(address, invitationCode)
+          console.log("[API] Connect wallet success:", res)
+        } catch (err) {
+          console.error("[API] Connect wallet failed:", err)
+        }
+      }
+    }
+    callConnectAPI()
+  }, [isConnected, address])
 
   const handleConnect = () => {
     open()

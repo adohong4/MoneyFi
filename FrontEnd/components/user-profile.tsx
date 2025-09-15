@@ -23,6 +23,8 @@ import { useToast } from "@/hooks/use-toast"
 import { useAccount } from "wagmi"
 import { ContractService } from "@/src/services/contractService"
 import { ethers } from "ethers"
+import { refApiService } from "@/services/referral.api"
+import { TransactionEventService } from "@/src/services"
 
 // Mock user data
 const mockUserData = {
@@ -62,6 +64,9 @@ export function UserProfile() {
     originalDepositAmount: 0,
     currentDepositAmount: 0,
   })
+  const [referralCode, setReferralCode] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [transactions, setTransactions] = useState<any[]>([])
   const { address, isConnected } = useAccount()
 
   useEffect(() => {
@@ -80,6 +85,25 @@ export function UserProfile() {
 
     fetchDepositInfo()
   }, [address, isConnected])
+
+  useEffect(() => {
+    const fetchUserInfor = async () => {
+      if (!address || !isConnected) return
+
+      setLoading(true)
+      try {
+        const userInfo = await refApiService.getUserInfor(address)
+
+        setReferralCode(userInfo.invitationCode)  // This also returns user data
+
+      } catch (error) {
+        console.error("Error fetching referral stats:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchUserInfor()
+  }, [address])
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -407,11 +431,11 @@ export function UserProfile() {
               <div className="p-4 bg-muted rounded-lg">
                 <div className="text-sm text-muted-foreground mb-2">Your Referral Code</div>
                 <div className="flex items-center gap-2">
-                  <code className="flex-1 p-2 bg-background rounded border font-mono">{mockUserData.referralCode}</code>
+                  <code className="flex-1 p-2 bg-background rounded border font-mono">{referralCode}</code>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyToClipboard(mockUserData.referralCode, "Referral code")}
+                    onClick={() => copyToClipboard(referralCode, "Referral code")}
                   >
                     <Copy className="w-4 h-4" />
                   </Button>

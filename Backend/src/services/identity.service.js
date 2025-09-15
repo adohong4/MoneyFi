@@ -10,7 +10,6 @@ class AccountService {
     static connectWallet = async (req, res) => {
         try {
             const { userAddress, invitationCode } = req.body;
-            console.log("invitationCode: ", invitationCode);
 
             const existAddress = await accountModel.findOne({ userAddress });
             if (existAddress) return "Connecting Wallet is successful!";
@@ -57,8 +56,7 @@ class AccountService {
 
     static userInformation = async (req, res) => {
         try {
-            const { userAddress } = req.body;
-
+            const { userAddress } = req.params;
             const infor = await accountModel.findOne({ userAddress })
             return infor;
 

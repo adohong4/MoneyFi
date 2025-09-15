@@ -12,7 +12,7 @@ import { formatUnits } from "viem"
 import { ContractService } from "@/src/services/contractService"
 import { api } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
-import { TOKENS_ADDRESSES } from "@/config/constants"
+import { apiService } from "@/services/api"
 
 const USDC_ADDRESS = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238" // USDC Sepolia
 const LP_TOKEN_ADDRESS = "0x88C3e7da67170E731B261475F3eB73f477355f4f" // MoneyFi LP Token
@@ -102,8 +102,8 @@ export function DepositWithdrawPanel() {
       // Gọi deposit function với amount đã chuyển đổi
       await contractService.depositUSDC(amountInWei, address)
 
-      const txHash = `0x${Math.random().toString(16).substr(2, 64)}` // Mock tx hash
-      await api.recordDeposit(address, depositAmount, txHash)
+      // 3) call backend API only after success
+      await apiService.deposit(address, amountInWei);
 
       toast({
         title: "Deposit Successful",
