@@ -1,6 +1,6 @@
 'use strict'
 
-const userService = require('../services/identity');
+const userService = require('../services/identity.service');
 const { OK, CREATED } = require('../core/success.response')
 
 class UserController {
