@@ -10,7 +10,7 @@ const userSchema = new Schema({
     invitationCode: { type: String, default: '' },
     isReferral: { type: Boolean, default: false },
     referralCode: { type: String, default: '' },
-    point: { type: Number, default: 0 },
+    balance: { type: Number, default: 0 },
 }, { timestamps: true })
 
 // userSchema.index({ userId: 1 });

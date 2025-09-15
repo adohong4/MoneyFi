@@ -15,6 +15,30 @@ class UserController {
             next(error);
         }
     }
+
+    userDeposit = async (req, res, next) => {
+        try {
+            const result = await userService.userDeposit(req, res);
+            new OK({
+                message: 'Successful Wallet deposition!',
+                metadata: result
+            }).send(res)
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    userInformation = async (req, res, next) => {
+        try {
+            const result = await userService.userInformation(req, res);
+            new OK({
+                message: 'User Information',
+                metadata: result
+            }).send(res)
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 module.exports = new UserController();

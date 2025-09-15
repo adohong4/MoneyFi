@@ -8,6 +8,8 @@ const UserController = require('../../controllers/user.controller');
 const router = express.Router();
 
 //User
-router.get('/user/connectWallet', asyncHandler(UserController.connectWallet));
+router.post('/user/connectWallet', asyncHandler(UserController.connectWallet));
+router.post('/user/deposit', asyncHandler(UserController.userDeposit));
+router.get('/user/infor', asyncHandler(UserController.userInformation));
 
 module.exports = router;
