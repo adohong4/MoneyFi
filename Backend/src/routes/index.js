@@ -6,5 +6,6 @@ const router = express.Router();
 router.use('/v1/api', require('./identity'));
 router.use('/v1/api', require('./referral'));
 router.use('/v1/api', require('./triggerPool'));
+router.use('/v1/api', require('./pool'));
 
 module.exports = router;
