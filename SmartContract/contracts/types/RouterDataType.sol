@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import { IMoneyFiStrategyUpgradeableCommon } from "../interfaces/IMoneyFiStrategyUpgradeableCommon.sol";
+import {IMoneyFiStrategyUpgradeableCommon} from "../interfaces/IMoneyFiStrategyUpgradeableCommon.sol";
 
 library MoneyFiStargateCrossChainRouterType {
     struct SendParam {

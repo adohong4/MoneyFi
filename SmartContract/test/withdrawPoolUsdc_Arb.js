@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 require("dotenv").config();
 
-// npx hardhat run test/withdraw/pool/withdrawPoolUsdc_Arb.js --network sepolia
+// npx hardhat run test/withdrawPoolUsdc_Arb.js --network sepolia
 async function main() {
     // Lấy tài khoản
     const [deployer, user] = await ethers.getSigners();
@@ -9,15 +9,15 @@ async function main() {
     console.log(`User address: ${user.address}`);
 
     // Địa chỉ hợp đồng từ .env
-    const routerAddress = process.env.MONEYFI_ROUTER;
-    const fundVaultAddress = process.env.MONEYFI_FUND_VAULT;
-    const usdcAddress = process.env.USDC_SEPOLIA_ADDRESS;
-    const arbAddress = process.env.ARB_SEPOLIA_ADDRESS; // ARB trên Sepolia
-    const strategyAddress = process.env.UNISWAP_V2_USDC_ARB;
-    const tokenLpAddress = process.env.MONEYFI_TOKEN_LP;
+    const routerAddress = process.env.MONEYFI_ROUTER || "0x2a64f7a1F0fb00d05Da02F37f1Ee0825CfCecb73";
+    const fundVaultAddress = process.env.MONEYFI_FUND_VAULT || "0xecec15AfAE07feE618D60406a3705945c35C34Cc";
+    const usdcAddress = process.env.USDC_SEPOLIA_ADDRESS || "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238";
+    const arbAddress = process.env.ARB_SEPOLIA_ADDRESS || "0x9734Fb63E86217EfBC54Bba85571bf173879CAE5";
+    const strategyAddress = process.env.UNISWAP_V2_USDC_ARB || "0x9524e890bbB7Fe2CE4B63fcfC493F6523FEFa76d";
+    const tokenLpAddress = process.env.MONEYFI_TOKEN_LP || "0x88C3e7da67170E731B261475F3eB73f477355f4f";
     const pairAddress = "0x78D0b232670d02f12CD294201cd35b724F1ab0Da"; // USDC/ARB pair
-    const controllerAddress = process.env.MONEYFI_CONTROLLER;
-    const uniswapRouterAddress = "0xC532a74256D3Db42D0Bf7dF58c9540F3"; // Uniswap V2 Router trên Sepolia (cần kiểm tra)
+    const controllerAddress = process.env.MONEYFI_CONTROLLER || "0x95f26cFAd70874e8e4FAF33B9a65634a44b10078";
+    const uniswapRouterAddress = process.env.UNISWAP_V2_ROUTER || "0xeE567Fe1712Faf6149d80dA1E6934E354124CfE3";
 
     // Kiểm tra biến môi trường
     if (!usdcAddress || !arbAddress || !strategyAddress || !routerAddress || !fundVaultAddress || !tokenLpAddress || !controllerAddress) {
@@ -33,7 +33,11 @@ async function main() {
     const tokenLp = await ethers.getContractAt("MoneyFiTokenLp", tokenLpAddress, user);
     const pair = await ethers.getContractAt("IUniswapV2Pair", pairAddress, user);
     const controller = await ethers.getContractAt("MoneyFiController", controllerAddress, user);
-    const uniswapRouter = await ethers.getContractAt("IUniswapV2Router02", uniswapRouterAddress, deployer);
+    const uniswapRouter = await ethers.getContractAt(
+        "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol:IUniswapV2Router02",
+        uniswapRouterAddress,
+        deployer
+    );
 
     // Kiểm tra uniswapPair trong strategy
     const strategyPair = await strategy.uniswapPair();
@@ -159,19 +163,67 @@ async function main() {
     const withdrawStrategySameChain = [
         {
             strategyAddress: strategyAddress,
-            share: userShares / 10n, // Rút 10% shares để thử
+            share: userShares / 10n, // Rút 10% shares để thử, điều chỉnh theo nhu cầu
+            externalCallData: ethers.getBytes("0x"),
         },
     ];
-    const unDistributedWithdraw = [];
-    const isReferral = false;
-    const signature = ethers.getBytes("0x"); // Sử dụng định dạng tương tự deposit script
-    const swapParam = {
+    const unDistributedWithdraw = [
+        {
+            tokenAddress: usdcAddress,
+            unDistributedAmount: userDepositInfo.currentDepositAmount, // Rút toàn bộ số dư chưa phân phối
+        },
+    ];
+    const isReferral = true; // Đặt true nếu cần referral
+    let signature = "";
+
+    // Tạo chữ ký referral nếu cần
+    if (isReferral) {
+        const nonce = await controller.nonce();
+        const signerAddress = await controller.signer();
+        const abiCoder = new ethers.AbiCoder();
+        const message = ethers.keccak256(
+            abiCoder.encode(
+                ["address", "uint256", "address", "bool"],
+                [signerAddress, nonce, user.address, isReferral]
+            )
+        );
+        const ethSignedMessage = ethers.getBytes(message);
+        const signerWallet = new ethers.Wallet(process.env.PRIVATE_KEY || "", ethers.provider);
+        signature = await signerWallet.signMessage(ethSignedMessage);
+        console.log(`Generated referral signature: ${signature}`);
+    }
+
+    // Swap param (nếu muốn swap USDC sang ARB)
+    const wantToSwap = false; // Đặt true nếu muốn swap sang ARB
+    let swapParam = {
         tokenReceive: ethers.ZeroAddress,
         swapImpl: ethers.ZeroAddress,
-        externalCallData: ethers.getBytes("0x"), // Sử dụng định dạng tương tự deposit script
+        externalCallData: ethers.getBytes("0x"),
         amountOutMin: 0,
         isV3: false,
     };
+
+    if (wantToSwap) {
+        // Tạo calldata cho Uniswap V2 swap
+        const path = [usdcAddress, arbAddress];
+        const amountOutMin = ethers.parseUnits("0.01", 18); // Số lượng ARB tối thiểu
+        const deadline = Math.floor(Date.now() / 1000) + 1800;
+        const swapCalldata = uniswapRouter.interface.encodeFunctionData("swapExactTokensForTokens", [
+            expectedAssets,
+            amountOutMin,
+            path,
+            user.address,
+            deadline,
+        ]);
+
+        swapParam = {
+            tokenReceive: arbAddress,
+            swapImpl: uniswapRouterAddress,
+            externalCallData: ethers.getBytes(swapCalldata),
+            amountOutMin,
+            isV3: false, // Sử dụng Uniswap V2
+        };
+    }
 
     // 11. Log ABI của hàm để kiểm tra
     const routerInterface = router.interface;
@@ -187,9 +239,16 @@ async function main() {
     const userProfit = await strategy.getUserProfit(user.address);
     console.log(`User profit: ${ethers.formatEther(userProfit)} (in wei)`);
 
-    // 14. Thực hiện rút tiền
+    // 14. Kiểm tra số dư USDC và ARB trước khi rút
+    const userUsdcBalanceBefore = await usdc.balanceOf(user.address);
+    console.log(`User USDC balance before withdraw: ${ethers.formatUnits(userUsdcBalanceBefore, 6)} USDC`);
+    const userArbBalanceBefore = await arb.balanceOf(user.address);
+    console.log(`User ARB balance before withdraw: ${ethers.formatUnits(userArbBalanceBefore, 18)} ARB`);
+
+    // 15. Thực hiện rút tiền
     console.log("=================================================================");
     console.log(`User withdrawing ${ethers.formatUnits(withdrawStrategySameChain[0].share, 18)} shares from Strategy...`);
+    console.log(`Withdrawing ${ethers.formatUnits(unDistributedWithdraw[0].unDistributedAmount, 6)} USDC from FundVault...`);
     console.log("SwapParam:", JSON.stringify(swapParam, null, 2));
     try {
         const withdrawTx = await router.connect(user).withdrawFundSameChain(
@@ -223,7 +282,7 @@ async function main() {
         throw error;
     }
 
-    // 15. Kiểm tra sau khi rút
+    // 16. Kiểm tra sau khi rút
     const updatedShares = await strategy.balanceOf(user.address);
     console.log("User shares in Strategy after withdraw:", ethers.formatUnits(updatedShares, 18));
 
@@ -244,8 +303,11 @@ async function main() {
     const updatedLpBalance = await tokenLp.balanceOf(user.address);
     console.log("User mUSDC balance after withdraw:", ethers.formatUnits(updatedLpBalance, 6), "mUSDC");
 
-    const userUsdcBalance = await usdc.balanceOf(user.address);
-    console.log("User USDC balance after withdraw:", ethers.formatUnits(userUsdcBalance, 6), "USDC");
+    const userUsdcBalanceAfter = await usdc.balanceOf(user.address);
+    console.log("User USDC balance after withdraw:", ethers.formatUnits(userUsdcBalanceAfter, 6), "USDC");
+
+    const userArbBalanceAfter = await arb.balanceOf(user.address);
+    console.log("User ARB balance after withdraw:", ethers.formatUnits(userArbBalanceAfter, 18), "ARB");
 
     const distributeFee = await fundVault.distributeFee(usdcAddress);
     console.log("Distribute Fee in FundVault:", ethers.formatUnits(distributeFee, 6), "USDC");
