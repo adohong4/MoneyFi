@@ -8,6 +8,6 @@ const router = express.Router();
 
 //pool
 router.post('/pool/add', asyncHandler(PoolController.addPool));
-router.post('/pool/get', asyncHandler(PoolController.getPool));
+router.get('/pool/get', asyncHandler(PoolController.getPool));
 
 module.exports = router;

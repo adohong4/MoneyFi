@@ -20,7 +20,7 @@ app.use('', require('./routes'));
 app.use('/images', express.static('upload'));
 
 // Starting listener
-//TriggerPoolService.startDepositListener().catch(console.error);
+TriggerPoolService.startDepositListener().catch(console.error);
 
 // Handling errors
 app.use((req, res, next) => {

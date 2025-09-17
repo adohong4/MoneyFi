@@ -7,9 +7,11 @@ const DOCUMENT_NAME = 'StrategyPool'
 const poolSchema = new Schema({
     name: { type: String }, // USDC/ARB
     strategyAddress: { type: String },
-    qouteToken: { type: String },
+    quoteToken: { type: String },
     baseToken: { type: String },
-    chainId: { type: Number, default: 115511 }
+    chainId: { type: Number, default: 115511 },
+    slippageWhenSwapAsset: { type: Number, default: true },
+    minimumSwapAmount: { type: Number, default: true }
 }, { timestamps: true })
 
 

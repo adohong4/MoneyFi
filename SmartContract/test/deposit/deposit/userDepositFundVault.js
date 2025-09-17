@@ -12,7 +12,7 @@ describe("MoneyFi Deposit Test", function () {
     let moneyFiRouter, moneyFiFundVault, moneyFiTokenLp, moneyFiController, usdc;
     const USDC_ADDRESS = process.env.USDC_SEPOLIA_ADDRESS; // Địa chỉ USDC trên Sepolia
     const TOKEN_LP_ADDRESS = process.env.MONEYFI_TOKEN_LP; // Thay bằng địa chỉ MoneyFiTokenLp mới
-    const AMOUNT_TO_DEPOSIT = ethers.parseUnits("6", 6); //  USDC (6 decimals)
+    const AMOUNT_TO_DEPOSIT = ethers.parseUnits("10", 6); //  USDC (6 decimals)
 
     before(async function () {
         // Lấy tài khoản

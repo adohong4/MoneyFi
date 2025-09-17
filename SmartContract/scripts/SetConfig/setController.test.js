@@ -38,36 +38,36 @@ async function main() {
     // }
 
     // 4. Set Strategy Internal (Uniswap Strategy)
-    // try {
-    //     const txStrategy = await moneyFiController.connect(deployer).setStrategyInternal(
-    //         addresses.UniswapV2_UNI_LINK,
-    //         {
-    //             name: "UniswapV2 UNI/LINK",
-    //             chainId: 11155111, // Sepolia chain ID
-    //             isActive: true,
-    //         }
-    //     );
-    //     await txStrategy.wait();
-    //     console.log("Set StrategyInternal for Uniswap Strategy");
-    // } catch (error) {
-    //     console.error("Failed to set StrategyInternal:", error.message);
-    // }
-
-    // 5. Set Dex Internal (Uniswap Dex)
     try {
-        const txDex = await moneyFiController.connect(deployer).setDexInternalSwap(
+        const txStrategy = await moneyFiController.connect(deployer).setStrategyInternal(
+            addresses.UniswapV2_LINK_WETH,
             {
-                name: "Dex Uniswap",
+                name: "UniswapV2 LINK/WETH",
                 chainId: 11155111, // Sepolia chain ID
                 isActive: true,
-            },
-            addresses.MoneyFiUniswap
+            }
         );
-        await txDex.wait();
-        console.log("Set DexInternal for Uniswap ");
+        await txStrategy.wait();
+        console.log("Set StrategyInternal for Uniswap Strategy");
     } catch (error) {
-        console.error("Failed to set DexInternal:", error.message);
+        console.error("Failed to set StrategyInternal:", error.message);
     }
+
+    // 5. Set Dex Internal (Uniswap Dex)
+    // try {
+    //     const txDex = await moneyFiController.connect(deployer).setDexInternalSwap(
+    //         {
+    //             name: "Dex Uniswap",
+    //             chainId: 11155111, // Sepolia chain ID
+    //             isActive: true,
+    //         },
+    //         addresses.MoneyFiUniswap
+    //     );
+    //     await txDex.wait();
+    //     console.log("Set DexInternal for Uniswap ");
+    // } catch (error) {
+    //     console.error("Failed to set DexInternal:", error.message);
+    // }
 
     // 6. Xác minh lại các thiết lập
     console.log("\nVerifying configurations...");

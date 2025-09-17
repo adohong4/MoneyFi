@@ -9,7 +9,7 @@ async function main() {
 
     // Địa chỉ token
     const USDC_ADDRESS = "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"; // USDC trên Sepolia
-    const UNI_ADDRESS = "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984"; // UNI trên Sepolia
+    const BASETOKEN_ADDRESS = "0x779877A7B0D9E8603169DdbD7836e478b4624789"; // Link trên Sepolia
 
     // Kết nối MoneyFiController
     const moneyFiController = await ethers.getContractAt(
@@ -27,20 +27,20 @@ async function main() {
     // await moneyFiController.connect(deployer).setMaxPercentLiquidityStrategyToken(USDC_ADDRESS, maxPercentLiquidityUsdc);
     // console.log(`Đã cập nhật maxPercentLiquidityStrategyToken cho USDC: ${maxPercentLiquidityUsdc}%`);
 
-    // 4. Cập nhật Max Percent Liquidity Strategy cho UNI
-    const maxPercentLiquidityUni = 100; // 1% (100/10000)
-    await moneyFiController.connect(deployer).setMaxPercentLiquidityStrategyToken(UNI_ADDRESS, maxPercentLiquidityUni);
-    console.log(`Đã cập nhật maxPercentLiquidityStrategyToken cho UNI: ${maxPercentLiquidityUni}%`);
+    // 4. Cập nhật Max Percent Liquidity Strategy cho BaseToken
+    const maxPercentLiquidity = 100; // 1% (100/10000)
+    await moneyFiController.connect(deployer).setMaxPercentLiquidityStrategyToken(BASETOKEN_ADDRESS, maxPercentLiquidity);
+    console.log(`Đã cập nhật maxPercentLiquidityStrategyToken cho BaseToken: ${maxPercentLiquidity}%`);
 
     // 5. Cập nhật Max Deposit Value cho USDC
     // const maxDepositValueUsdc = ethers.parseUnits("1000", 6); // 1000 USDC
     // await moneyFiController.connect(deployer).setMaxDepositValue(USDC_ADDRESS, maxDepositValueUsdc);
     // console.log(`Đã cập nhật maxDepositValueToken cho USDC: ${ethers.formatUnits(maxDepositValueUsdc, 6)} USDC`);
 
-    // 6. Cập nhật Max Deposit Value cho UNI
-    const maxDepositValueUni = ethers.parseUnits("0.001", 18); // 0.001 UNI
-    await moneyFiController.connect(deployer).setMaxDepositValue(UNI_ADDRESS, maxDepositValueUni);
-    console.log(`Đã cập nhật maxDepositValueToken cho UNI: ${ethers.formatUnits(maxDepositValueUni, 18)} UNI`);
+    // 6. Cập nhật Max Deposit Value cho BaseToken
+    const maxDepositValueUni = ethers.parseUnits("0.001", 18); // 0.001 BaseToken, decimal 18
+    await moneyFiController.connect(deployer).setMaxDepositValue(BASETOKEN_ADDRESS, maxDepositValueUni);
+    console.log(`Đã cập nhật maxDepositValueToken cho BaseToken: ${ethers.formatUnits(maxDepositValueUni, 18)} BaseToken`);
 
     // 9. Xác minh cấu hình
     console.log("\nXác minh cấu hình...");
@@ -48,14 +48,14 @@ async function main() {
     const maxPercentUsdc = await moneyFiController.maxPercentLiquidityStrategyToken(USDC_ADDRESS);
     console.log(`maxPercentLiquidityStrategyToken[USDC]: ${maxPercentUsdc}%`);
 
-    const maxPercentUni = await moneyFiController.maxPercentLiquidityStrategyToken(UNI_ADDRESS);
-    console.log(`maxPercentLiquidityStrategyToken[UNI]: ${maxPercentUni}%`);
+    const maxPercentUni = await moneyFiController.maxPercentLiquidityStrategyToken(BASETOKEN_ADDRESS);
+    console.log(`maxPercentLiquidityStrategyToken[BaseToken]: ${maxPercentUni}%`);
 
     const maxDepositUsdc = await moneyFiController.maxDepositValueToken(USDC_ADDRESS);
     console.log(`maxDepositValueToken[USDC]: ${ethers.formatUnits(maxDepositUsdc, 6)} USDC`);
 
-    const maxDepositUni = await moneyFiController.maxDepositValueToken(UNI_ADDRESS);
-    console.log(`maxDepositValueToken[UNI]: ${ethers.formatUnits(maxDepositUni, 18)} UNI`);
+    const maxDepositUni = await moneyFiController.maxDepositValueToken(BASETOKEN_ADDRESS);
+    console.log(`maxDepositValueToken[BaseToken]: ${ethers.formatUnits(maxDepositUni, 18)} BaseToken`);
 }
 
 main()

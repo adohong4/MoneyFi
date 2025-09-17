@@ -11,6 +11,7 @@ const wallet = new ethers.Wallet(process.env.OPERATOR_PRIVATE_KEY, provider);
 const fundVault = new ethers.Contract(process.env.MONEYFI_FUND_VAULT, abi.fundVault, provider);
 const router = new ethers.Contract(process.env.MONEYFI_ROUTER, abi.routerAbi, wallet);
 const controller = new ethers.Contract(process.env.MONEYFI_CONTROLLER, abi.controllerAbi, provider);
+const usdcAddress = process.env.USDC_SEPOLIA_ADDRESS;
 
 class TriggerPoolService {
     static startDepositListener = async () => {
@@ -18,7 +19,21 @@ class TriggerPoolService {
 
         fundVault.on('DepositFundVault', async (token, receiver, amount, actualDepositAmount, timestamp, event) => {
             try {
-                console.log(`Deposit detected: ${ethers.formatUnits(amount, 6)} ${token} by ${receiver}`);
+                // Chỉ xử lý USDC
+                if (token.toLowerCase() !== usdcAddress.toLowerCase()) {
+                    console.log(`Only USDC is supported, received token: ${token}, skipping...`);
+                    return;
+                }
+
+                // Lấy instance contract USDC
+                const tokenContract = new ethers.Contract(usdcAddress, [
+                    "function balanceOf(address) view returns (uint256)",
+                    "function decimals() view returns (uint8)"
+                ], provider);
+
+                // decimals trả về bigint trong ethers v6 -> convert to Number
+                const decimals = Number(await tokenContract.decimals()); // USDC: 6 decimals
+                console.log(`Deposit detected: ${ethers.formatUnits(amount, decimals)} USDC by ${receiver}`);
 
                 // Kiểm tra trạng thái hợp đồng
                 const isRouterPaused = await router.paused();
@@ -28,120 +43,168 @@ class TriggerPoolService {
                     return;
                 }
 
-                // Kiểm tra số dư token trong FundVault
-                const tokenContract = new ethers.Contract(token, abi.ierc20, provider);
-                const fundVaultBalance = await tokenContract.balanceOf(process.env.MONEYFI_FUND_VAULT);
+                // Kiểm tra số dư USDC trong FundVault
+                const fundVaultBalance = await tokenContract.balanceOf(process.env.MONEYFI_FUND_VAULT); // bigint
                 if (fundVaultBalance < amount) {
-                    console.log(`FundVault insufficient balance: ${ethers.formatUnits(fundVaultBalance, 6)} ${token}`);
+                    console.log(`FundVault insufficient balance: ${ethers.formatUnits(fundVaultBalance, decimals)} USDC`);
+                    return;
+                }
+                console.log(`FundVault USDC balance: ${ethers.formatUnits(fundVaultBalance, decimals)} USDC`);
+
+                // Truy xuất pool từ MongoDB, chỉ lấy pool có chainId = sepolia (11155111)
+                const pools = await StrategyPool.find({ chainId: 11155111 });
+                if (pools.length === 0) {
+                    console.log('No USDC pools found in MongoDB, skipping deposit...');
                     return;
                 }
 
-                // Kiểm tra allowance của FundVault cho Router
-                const allowance = await tokenContract.allowance(process.env.MONEYFI_FUND_VAULT, process.env.MONEYFI_ROUTER);
-                if (allowance < amount) {
-                    console.log(`Approving ${ethers.formatUnits(amount, 6)} ${token} for Router...`);
-                    const tx = await tokenContract.connect(wallet).approve(process.env.MONEYFI_ROUTER, ethers.MaxUint256, { gasLimit: 100000 });
-                    await tx.wait();
-                    console.log('Approval successful');
-                }
-
-                // Truy xuất pool từ MongoDB
-                const pools = await StrategyPool.find({ chainId: 11155111 });
-
                 // Thu thập dữ liệu on-chain
                 const poolData = await Promise.all(pools.map(async (pool) => {
-                    const strategy = new ethers.Contract(pool.strategyAddress, abi.strategyAbi, provider);
-                    const tvl = await strategy.totalLiquidWhitelistPool();
-                    const totalAssets = await strategy.totalAssets();
-                    const userBalance = await strategy.convertToAssets(await strategy.balanceOf(receiver));
-                    const maxPercentLiquidity = await controller.maxPercentLiquidityStrategyToken(pool.baseToken);
-                    const maxDepositValue = await controller.maxDepositValueToken(pool.baseToken);
-                    const tokenInfo = await controller.getSupportedTokenInternalInfor(pool.baseToken);
+                    try {
+                        // Kiểm tra strategyAddress hợp lệ
+                        if (!ethers.isAddress(pool.strategyAddress)) {
+                            console.log(`Invalid strategyAddress for ${pool.name}: ${pool.strategyAddress}, skipping...`);
+                            return null;
+                        }
 
-                    // Kiểm tra strategy active và underlying asset
-                    const isStrategyActive = await controller.isStrategyInternalActive(pool.strategyAddress);
-                    if (!isStrategyActive) {
-                        console.log(`Strategy ${pool.name} is not active, skipping...`);
+                        const strategy = new ethers.Contract(pool.strategyAddress, abi.strategyAbi, provider);
+
+                        // Kiểm tra contract strategy tồn tại
+                        try {
+                            await strategy.totalLiquidWhitelistPool();
+                        } catch (error) {
+                            console.log(`Strategy ${pool.name} is not deployed or invalid: ${error.message}, skipping...`);
+                            return null;
+                        }
+
+                        // Các giá trị trả về là bigint (ethers v6)
+                        const tvl = await strategy.totalLiquidWhitelistPool();          // bigint
+                        const totalAssets = await strategy.totalAssets();               // bigint
+                        const balanceOfUser = await strategy.balanceOf(receiver);       // bigint
+                        const userBalance = await strategy.convertToAssets(balanceOfUser); // bigint
+
+                        const maxPercentLiquidity = await controller.maxPercentLiquidityStrategyToken(pool.baseToken); // bigint or number
+                        const maxDepositValue = await controller.maxDepositValueToken(pool.baseToken); // bigint
+                        const tokenInfo = await controller.getSupportedTokenInternalInfor(pool.baseToken);
+
+                        // Debug log
+                        console.log(`Pool ${pool.name}: tvl=${tvl.toString()}, totalAssets=${totalAssets.toString()}, userBalance=${userBalance.toString()}`);
+
+                        // Kiểm tra strategy active và underlying asset
+                        const isStrategyActive = await controller.isStrategyInternalActive(pool.strategyAddress);
+                        if (!isStrategyActive) {
+                            console.log(`Strategy ${pool.name} is not active, skipping...`);
+                            return null;
+                        }
+                        const underlyingAsset = await strategy.asset();
+                        if (underlyingAsset.toLowerCase() !== token.toLowerCase()) {
+                            if (!process.env.UNISWAP_DEX_ADDRESS) {
+                                console.log(`Strategy ${pool.name} underlying asset (${underlyingAsset}) does not match deposited token (${token}), skipping...`);
+                                return null;
+                            } else {
+                                console.log(`Strategy ${pool.name} requires swap from ${token} -> ${underlyingAsset}, will use swapParam...`);
+                            }
+                        }
+
+                        // Kiểm tra baseToken và quoteToken
+                        const baseToken = await strategy.baseToken();
+                        const quoteToken = await strategy.quoteToken();
+                        if (baseToken.toLowerCase() !== pool.baseToken.toLowerCase() || quoteToken.toLowerCase() !== pool.quoteToken.toLowerCase()) {
+                            console.log(`Strategy ${pool.name} baseToken/quoteToken mismatch, skipping...`);
+                            return null;
+                        }
+
+                        // Kiểm tra totalAssets và tvl
+                        if (totalAssets === undefined || tvl === undefined) {
+                            console.log(`Invalid totalAssets or tvl for ${pool.name}: totalAssets=${totalAssets}, tvl=${tvl}, skipping...`);
+                            return null;
+                        }
+
+                        // Tính khoảng trống thanh khoản (dùng bigint arithmetic)
+                        // guard divide by zero
+                        let liquidityRoomNumber = 0;
+                        if (tvl !== 0n) {
+                            // maxPercentLiquidity và phép tính có thể cần chuẩn theo đơn vị contract của bạn.
+                            // Duy trì công thức ban đầu: maxPercentLiquidity - (totalAssets * 10000 / tvl)
+                            // đảm bảo tất cả là BigInt trước khi tính
+                            const maxPerc = BigInt(maxPercentLiquidity);
+                            const calc = maxPerc - (BigInt(totalAssets) * 10000n) / BigInt(tvl);
+                            liquidityRoomNumber = Number(calc > 0n ? calc : 0n);
+                        }
+
+                        const tokenDecimals = Number(tokenInfo.decimals); // convert to Number for format/parse
+
+                        return {
+                            ...pool.toObject(),
+                            tvl: tvl.toString(),
+                            totalAssets: totalAssets.toString(),
+                            liquidityRoom: liquidityRoomNumber > 0 ? liquidityRoomNumber : 0,
+                            userBalance: userBalance.toString(),
+                            maxDepositValue: (BigInt(maxDepositValue)).toString(),
+                            decimals: tokenDecimals,
+                        };
+                    } catch (error) {
+                        console.error(`Error processing pool ${pool.name}:`, error && error.stack ? error.stack : error);
                         return null;
                     }
-                    const underlyingAsset = await strategy.asset();
-                    if (underlyingAsset.toLowerCase() !== token.toLowerCase()) {
-                        console.log(`Strategy ${pool.name} underlying asset (${underlyingAsset}) does not match deposited token (${token}), skipping...`);
-                        return null;
-                    }
-
-                    // Kiểm tra baseToken và quoteToken
-                    const baseToken = await strategy.baseToken();
-                    const quoteToken = await strategy.quoteToken();
-                    if (baseToken.toLowerCase() !== pool.baseToken.toLowerCase() || quoteToken.toLowerCase() !== pool.quoteToken.toLowerCase()) {
-                        console.log(`Strategy ${pool.name} baseToken/quoteToken mismatch, skipping...`);
-                        return null;
-                    }
-
-                    // Tính khoảng trống thanh khoản
-                    const liquidityRoom = maxPercentLiquidity.sub(totalAssets.mul(10_000).div(tvl)).toNumber();
-
-                    return {
-                        ...pool.toObject(),
-                        tvl: tvl.toString(),
-                        totalAssets: totalAssets.toString(),
-                        liquidityRoom: liquidityRoom > 0 ? liquidityRoom : 0,
-                        userBalance: userBalance.toString(),
-                        maxDepositValue: maxDepositValue.toString(),
-                        decimals: tokenInfo.decimals.toNumber(),
-                    };
                 }));
 
                 // Lọc pool hợp lệ
-                const validPools = poolData.filter(pool => pool !== null);
+                const validPools = poolData.filter(p => p !== null);
                 if (validPools.length === 0) {
                     console.log('No valid pools found, skipping deposit...');
                     return;
                 }
 
                 // Tính điểm cho mỗi pool (chỉ dùng TVL và liquidityRoom)
-                const maxTVL = Math.max(...validPools.map(p => parseInt(p.tvl)));
+                // Xử lý TVL bằng bigint để tránh mất precision
+                const maxTVL = validPools.reduce((acc, p) => {
+                    const b = BigInt(p.tvl);
+                    return b > acc ? b : acc;
+                }, 0n);
                 const maxLiquidityRoom = Math.max(...validPools.map(p => p.liquidityRoom));
 
-                const scoredPools = validPools.map(pool => ({
-                    ...pool,
-                    tvlScore: maxTVL ? (parseInt(pool.tvl) / maxTVL) * 100 : 0,
-                    liquidityRoomScore: maxLiquidityRoom ? (pool.liquidityRoom / maxLiquidityRoom) * 100 : 0,
-                    totalScore: maxTVL && maxLiquidityRoom
-                        ? (0.6 * (parseInt(pool.tvl) / maxTVL) * 100) +
-                        (0.4 * (pool.liquidityRoom / maxLiquidityRoom) * 100)
-                        : 0,
-                }));
+                const scoredPools = validPools.map(pool => {
+                    const tvlScore = maxTVL !== 0n ? Number((BigInt(pool.tvl) * 100n) / maxTVL) : 0;
+                    const liquidityRoomScore = maxLiquidityRoom ? (pool.liquidityRoom / maxLiquidityRoom) * 100 : 0;
+                    const totalScore = (0.6 * tvlScore) + (0.4 * liquidityRoomScore);
+                    return {
+                        ...pool,
+                        tvlScore,
+                        liquidityRoomScore,
+                        totalScore,
+                    };
+                });
 
                 // Sắp xếp pool theo điểm
                 scoredPools.sort((a, b) => b.totalScore - a.totalScore);
 
-                // Phân bổ tài sản (40%, 30%, 20%, 10%) - tối đa 4 pool
-                const totalAmount = amount; // Không trừ phí vì distributionFee = 0
+                // Phân bổ tài sản (10% mỗi pool, tối đa 4 pool, tổng 40%)
+                const totalAmount = fundVaultBalance; // bigint
                 const allocations = [
-                    totalAmount.mul(10).div(100), // 40%
-                    totalAmount.mul(10).div(100), // 30%
-                    totalAmount.mul(10).div(100), // 20%
-                    totalAmount.mul(10).div(100), // 10%
+                    totalAmount * 10n / 100n,
+                    totalAmount * 10n / 100n,
+                    totalAmount * 10n / 100n,
+                    totalAmount * 10n / 100n,
                 ];
 
                 // Gọi deposit cho tối đa 4 pool
                 for (let i = 0; i < Math.min(scoredPools.length, 4); i++) {
                     const pool = scoredPools[i];
                     const amountForPool = allocations[i];
-                    const distributionFee = ethers.parseUnits('0', pool.decimals); // Phí = 0
+                    const distributionFee = ethers.parseUnits('0', pool.decimals); // Phí = 0 (returns bigint)
 
                     try {
                         // Bỏ qua swap giá trên testnet, đặt amountOutMin = 0
                         const amountOutMinWei = 0;
 
-                        // Kiểm tra giới hạn
+                        // Kiểm tra giới hạn (hãy chắc controller chấp nhận bigint)
                         await controller.validateDistributeFundToStrategy(pool.strategyAddress, receiver, amountForPool);
 
                         // Tham số deposit
                         const depositParam = {
                             strategyAddress: pool.strategyAddress,
-                            depositedTokenAddress: token,
+                            depositedTokenAddress: usdcAddress,
                             depositor: receiver,
                             amount: amountForPool,
                             distributionFee: distributionFee,
@@ -157,16 +220,19 @@ class TriggerPoolService {
 
                         // Gọi hàm deposit
                         const tx = await router.depositFundToStrategySameChainFromOperator(depositParam, swapParam, {
-                            gasLimit: 1000000,
+                            gasLimit: 500000,
                         });
 
                         console.log(`Deposit to ${pool.name} successful: ${tx.hash}`);
                     } catch (error) {
-                        console.error(`Error depositing to ${pool.name}: ${error.message}`);
+                        console.error(`Error depositing to ${pool.name}:`, error && error.stack ? error.stack : error);
                     }
                 }
+
+                const balanceAfterDeposit = await tokenContract.balanceOf(process.env.MONEYFI_FUND_VAULT); // bigint
+                console.log(`FundVault USDC balance after deposit: ${ethers.formatUnits(balanceAfterDeposit, decimals)} USDC`);
             } catch (error) {
-                console.error(`Error in DepositFundVault listener: ${error.message}`);
+                console.error(`Error in DepositFundVault listener:`, error && error.stack ? error.stack : error);
             }
         });
     };

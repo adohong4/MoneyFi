@@ -7,14 +7,16 @@ const { abi } = require('../core/abi.contract');
 class PoolService {
     static async addPool(req, res) {
         try {
-            const { name, strategyAddress, baseToken, quoteToken, chainId } = req.body;
+            const { name, strategyAddress, baseToken, quoteToken, chainId, slippageWhenSwapAsset, minimumSwapAmount } = req.body;
 
-            const newPool = await userModel.create({
+            const newPool = await StrategyPool.create({
                 name: name,
                 strategyAddress: strategyAddress,
                 baseToken: baseToken,
                 quoteToken: quoteToken,
-                chainId: chainId
+                chainId: chainId,
+                slippageWhenSwapAsset: slippageWhenSwapAsset,
+                minimumSwapAmount: minimumSwapAmount
             })
 
             return newPool
