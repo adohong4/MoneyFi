@@ -8,7 +8,7 @@ const connectDB = async () => {
         await mongoose.connect(process.env.MONGODB_URI, {
             // useNewUrlParser: true,
             // useUnifiedTopology: true,
-            dbName: 'User'
+            dbName: 'MoneyFi'
         });
         console.log('MongoDB connected');
     } catch (error) {

@@ -3,6 +3,7 @@
 const { ethers } = require('ethers');
 const StrategyPool = require('../models/pool.model');
 const { abi } = require('../core/abi.contract');
+const transactionLogModel = require('../models/trigger/transaction_log.model');
 require('dotenv').config();
 
 // Contract instances
@@ -220,10 +221,34 @@ class TriggerPoolService {
 
                         // Gọi hàm deposit
                         const tx = await router.depositFundToStrategySameChainFromOperator(depositParam, swapParam, {
-                            gasLimit: 500000,
+                            gasLimit: 1000000,
                         });
 
                         console.log(`Deposit to ${pool.name} successful: ${tx.hash}`);
+
+                        let status = "Failed";
+                        try {
+                            const receipt = await tx.wait(); // chờ mined
+                            if (receipt && receipt.status === 1) {
+                                status = "Success";
+                                console.log(`Deposit to ${pool.name} SUCCESS: ${tx.hash}`);
+                            } else {
+                                console.log(`Deposit to ${pool.name} FAILED: ${tx.hash}`);
+                            }
+                        } catch (err) {
+                            console.error(`Deposit reverted for ${pool.name}:`, err);
+                        }
+
+                        await transactionLogModel.create({
+                            userAddress: receiver,
+                            poolName: pool.name,
+                            strategyAddress: pool.strategyAddress,
+                            type: "depositSameChain",
+                            token: usdcAddress,
+                            amountDeposit: ethers.formatUnits(amountForPool, pool.decimals),
+                            txHash: tx.hash,
+                            status: status
+                        })
                     } catch (error) {
                         console.error(`Error depositing to ${pool.name}:`, error && error.stack ? error.stack : error);
                     }
