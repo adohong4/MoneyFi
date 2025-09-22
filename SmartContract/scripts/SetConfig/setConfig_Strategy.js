@@ -10,12 +10,12 @@ async function main() {
     // Kết nối với hợp đồng UniswapV2_LINK_WETH
     const strategy = await ethers.getContractAt(
         "MoneyFiStrategyUpgradeableUniswapV2",
-        addresses.UniswapV2_LINK_WETH,
+        addresses.UniswapV2_UNI_LINK,
         deployer
     );
 
     console.log("Deployer address:", deployer.address);
-    console.log("MoneyFiStrategyUpgradeableUniswapV2 address:", addresses.UniswapV2_LINK_WETH);
+    console.log("MoneyFiStrategyUpgradeableUniswapV2 address:", addresses.UniswapV2_UNI_LINK);
     console.log("\n=== Setting up MoneyFiStrategyUpgradeableUniswapV2 Configurations ===");
 
     // 2. Kiểm tra và set minimumSwapAmount

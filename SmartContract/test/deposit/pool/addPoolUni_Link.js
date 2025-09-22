@@ -56,13 +56,13 @@ async function main() {
     console.log(`Minimum Swap Amount: ${ethers.formatUnits(minimumSwapAmount, 18)} UNI`);
 
     // 1. Kiểm tra dữ liệu đầu vào
-    const amount = ethers.parseUnits("1", 6); // 1 USDC
+    const amount = ethers.parseUnits("30", 6); // 1 USDC
     const depositParam = {
         strategyAddress: strategyAddress,
         depositor: user.address,
         depositedTokenAddress: usdcAddress, // Token deposit là USDC
         amount: amount,
-        distributionFee: ethers.parseUnits("0.0", 6), // Phí phân phối = 0
+        distributionFee: ethers.parseUnits("0.01", 6), // Phí phân phối = 0
         externalCallData: ethers.getBytes("0x"),
     };
 
@@ -163,7 +163,7 @@ async function main() {
 
     // 10. Thực hiện deposit
     console.log("=================================================================");
-    console.log("Deployer đang deposit 1 USDC vào Strategy cho user...");
+    console.log("Deployer đang deposit 30 USDC vào Strategy cho user...");
     try {
         const depositTx = await router
             .connect(deployer)

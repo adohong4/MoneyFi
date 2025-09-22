@@ -9,29 +9,30 @@ async function main() {
 
     // Đọc địa chỉ từ .env và contractAddresses
     const addresses = getAddresses();
-    const usdc = process.env.USDC_SEPOLIA_ADDRESS; // USDC trên Sepolia
-    const weth = process.env.WETH_SEPOLIA_ADDRESS; // WETH trên Sepolia
+    const uni = process.env.UNI_SEPOLIA_ADDRESS; // UNI trên Sepolia
+    const link = process.env.LINK_SEPOLIA_ADDRESS; // WETH trên Sepolia
     const uniswapRouter = process.env.UNISWAP_V2_ROUTER;
     const uniswapFactory = process.env.UNISWAP_V2_FACTORY;
     const router = addresses.MoneyFiRouter;
     const crossChainRouter = addresses.MoneyFiCrossChainRouter;
 
-    if (!usdc || !weth || !uniswapRouter || !uniswapFactory) {
+    if (!uni || !link || !uniswapRouter || !uniswapFactory) {
         throw new Error("Missing required addresses in .env");
     }
 
     // Params cho initialize (sử dụng struct)
     const params = {
         admin: deployer.address,
-        baseToken: usdc,
-        quoteToken: weth,
+        baseToken: uni,
+        quoteToken: link,
         router: router,
         crossChainRouter: crossChainRouter,
         uniswapRouter: uniswapRouter,
         uniswapFactory: uniswapFactory,
-        slippageWhenSwapAsset: 200, // 2% slippage
-        name: "MoneyFi Uniswap USDC/WETH",
-        symbol: "MFUW",
+        slippageWhenSwapAsset: 100, // 1% slippage
+        minimumSwapAmount: ethers.parseUnits("0.01", 6),
+        name: "UniswapV2 UNI/WETH",
+        symbol: "MFUNIWE",
     };
 
     // Deploy proxy
@@ -44,14 +45,14 @@ async function main() {
 
     await strategy.waitForDeployment();
     const strategyAddress = await strategy.getAddress();
-    console.log("MoneyFiStrategyUpgradeableUniswap proxy deployed to:", strategyAddress);
+    console.log("UniswapV2_UNI_LINK proxy deployed to:", strategyAddress);
 
     const implementationAddress = await upgrades.erc1967.getImplementationAddress(strategyAddress);
-    console.log("MoneyFiStrategyUpgradeableUniswap implementation deployed to:", implementationAddress);
+    console.log("UniswapV2_UNI_LINK_Implementation deployed to:", implementationAddress);
 
     // Lưu địa chỉ
-    saveAddress("MoneyFiStrategyUpgradeableUniswap", strategyAddress);
-    saveAddress("MoneyFiStrategyUpgradeableUniswap_Implementation", implementationAddress);
+    saveAddress("UniswapV2_UNI_LINK", strategyAddress);
+    saveAddress("UniswapV2_UNI_LINK_Implementation", implementationAddress);
 }
 
 main()

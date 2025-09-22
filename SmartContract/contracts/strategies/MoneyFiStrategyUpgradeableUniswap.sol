@@ -26,15 +26,15 @@ contract MoneyFiStrategyUpgradeableUniswap is
                                 USER-FACING STORAGE
     //////////////////////////////////////////////////////////////////////////*/
 
-    /// @dev Storage for Uniswap V2 contracts
-    address public uniswapRouter;
-    address public uniswapPair;
-    address public token0;
-    address public token1;
-    address public quoteToken;
-    address public baseToken;
-    uint256 public slippageWhenSwapAsset;
-    uint256 public minimumSwapAmount;
+    address public override uniswapRouter;
+    address public uniswapFactory;
+    address public override uniswapPair;
+    address public override token0;
+    address public override token1;
+    address public override quoteToken;
+    address public override baseToken;
+    uint256 public override slippageWhenSwapAsset;
+    uint256 public override minimumSwapAmount;
 
     /*//////////////////////////////////////////////////////////////////////////
                                     STRUCTS
@@ -49,14 +49,22 @@ contract MoneyFiStrategyUpgradeableUniswap is
         address uniswapRouter;
         address uniswapFactory;
         uint256 slippageWhenSwapAsset;
+        uint256 minimumSwapAmount;
         string name;
         string symbol;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
-                                    CONSTRUCTOR
+                                    EVENT
     //////////////////////////////////////////////////////////////////////////*/
 
+    event DebugAfterDeposit(uint256 baseBalance, uint256 amountToSwap, uint256 expectedQuoteOut, uint256 quoteReceived);
+    event DebugSwap(uint256 amountIn, uint256 amountOut, string action);
+    event DebugAddLiquidity(uint256 baseAmount, uint256 quoteAmount, uint256 amountA, uint256 amountB);
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    CONSTRUCTOR
+    //////////////////////////////////////////////////////////////////////////*/
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -67,6 +75,7 @@ contract MoneyFiStrategyUpgradeableUniswap is
     //////////////////////////////////////////////////////////////////////////*/
 
     function initialize(InitializeParams memory params) public initializer {
+        // Gọi initializer theo đúng thứ tự kế thừa
         __DefaultAccessControlEnumerable_init(params.admin);
         _MoneyFiStartegyUpgradeableBase_init(
             IERC20(params.baseToken), params.router, params.crossChainRouter, params.name, params.symbol
@@ -76,15 +85,21 @@ contract MoneyFiStrategyUpgradeableUniswap is
         baseToken = params.baseToken;
         quoteToken = params.quoteToken;
         uniswapRouter = params.uniswapRouter;
+        uniswapFactory = params.uniswapFactory;
         slippageWhenSwapAsset = params.slippageWhenSwapAsset;
-        minimumSwapAmount = 1e16;
+        minimumSwapAmount = params.minimumSwapAmount;
 
-        // Set up Uniswap pair
-        _setupUniswapPair(params.uniswapFactory, params.baseToken, params.quoteToken);
-
-        // Approve tokens for Uniswap Router
+        // Approve max tokens for Uniswap Router
         ERC20(params.baseToken).safeIncreaseAllowance(params.uniswapRouter, type(uint256).max);
         ERC20(params.quoteToken).safeIncreaseAllowance(params.uniswapRouter, type(uint256).max);
+        address pair = IUniswapV2Factory(params.uniswapFactory).getPair(params.baseToken, params.quoteToken);
+        if (pair == address(0)) {
+            revert InvalidPair();
+        }
+        uniswapPair = pair;
+        (token0, token1) = params.baseToken < params.quoteToken
+            ? (params.baseToken, params.quoteToken)
+            : (params.quoteToken, params.baseToken);
         ERC20(uniswapPair).safeIncreaseAllowance(params.uniswapRouter, type(uint256).max);
     }
 
@@ -103,28 +118,40 @@ contract MoneyFiStrategyUpgradeableUniswap is
     }
 
     function totalAssets() public view override returns (uint256) {
-        uint256 baseTokenBalance = ERC20(baseToken).balanceOf(address(this));
-        uint256 quoteTokenBalance = ERC20(quoteToken).balanceOf(address(this));
-        uint256 lpBalance = IUniswapV2Pair(uniswapPair).balanceOf(address(this));
+        uint256 baseBalance = ERC20(baseToken).balanceOf(address(this));
+        uint256 lpBalance = ERC20(uniswapPair).balanceOf(address(this));
 
         if (lpBalance == 0) {
-            return baseTokenBalance + _convertQuoteToBase(quoteTokenBalance);
+            return baseBalance;
         }
 
+        // Lấy reserves của pool
         (uint256 reserve0, uint256 reserve1,) = IUniswapV2Pair(uniswapPair).getReserves();
-        uint256 totalSupply = IUniswapV2Pair(uniswapPair).totalSupply();
-        (uint256 amount0, uint256 amount1) =
-            (lpBalance.mulDiv(reserve0, totalSupply), lpBalance.mulDiv(reserve1, totalSupply));
+        uint256 baseReserve = token0 == baseToken ? reserve0 : reserve1;
+        uint256 quoteReserve = token0 == baseToken ? reserve1 : reserve0;
 
-        (uint256 baseAmount, uint256 quoteAmount) = token0 == baseToken ? (amount0, amount1) : (amount1, amount0);
+        // Tính tổng supply LP token
+        uint256 totalLpSupply = ERC20(uniswapPair).totalSupply();
 
-        return baseAmount + _convertQuoteToBase(quoteAmount) + baseTokenBalance + _convertQuoteToBase(quoteTokenBalance);
+        // Tính giá trị baseToken từ LP token
+        uint256 lpBaseValue = lpBalance.mulDiv(baseReserve, totalLpSupply, Math.Rounding.Floor);
+
+        // Tính giá trị quoteToken từ LP token và chuyển đổi sang baseToken
+        uint256 lpQuoteValue = lpBalance.mulDiv(quoteReserve, totalLpSupply, Math.Rounding.Floor);
+        uint256 quoteToBase = lpQuoteValue > 0 ? _getExpectedMinimumAmountOut(lpQuoteValue) : 0;
+
+        return baseBalance + lpBaseValue + quoteToBase;
     }
 
-    function totalLiquidWhitelistPool() public view override returns (uint256 tvl) {
+    function totalLiquidWhitelistPool() external view override returns (uint256 tvl) {
         (uint256 reserve0, uint256 reserve1,) = IUniswapV2Pair(uniswapPair).getReserves();
-        tvl = ERC20(baseToken).balanceOf(address(uniswapPair))
-            + _convertQuoteToBase(ERC20(quoteToken).balanceOf(address(uniswapPair)));
+        uint256 baseReserve = token0 == baseToken ? reserve0 : reserve1;
+        uint256 quoteReserve = token0 == baseToken ? reserve1 : reserve0;
+
+        // Chuyển đổi quoteReserve sang baseToken
+        uint256 quoteToBase = quoteReserve > 0 ? _getExpectedMinimumAmountOut(quoteReserve) : 0;
+
+        tvl = baseReserve + quoteToBase; // Tổng giá trị ở baseToken decimals
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -136,100 +163,61 @@ contract MoneyFiStrategyUpgradeableUniswap is
         override
         returns (uint256 accruedAssets)
     {
-        uint256 totalShares = totalSupply();
-        uint256 lpBalance = IUniswapV2Pair(uniswapPair).balanceOf(address(this));
-        uint256 depositorLP = lpBalance.mulDiv(shares, totalShares, Math.Rounding.Floor);
+        uint256 strategyLpBalance = ERC20(uniswapPair).balanceOf(address(this));
+        uint256 depositorLP = strategyLpBalance.mulDiv(shares, totalSupply(), Math.Rounding.Floor);
 
-        if (depositorLP > 0) {
-            (uint256 amount0, uint256 amount1) = _removeLiquidity(depositorLP);
-            (uint256 baseAmount, uint256 quoteAmount) = token0 == baseToken ? (amount0, amount1) : (amount1, amount0);
+        (uint256 amount0, uint256 amount1) = IUniswapV2Router02(uniswapRouter).removeLiquidity(
+            token0, token1, depositorLP, 0, 0, address(this), block.timestamp + 30
+        );
 
-            uint256 quoteBalance = ERC20(quoteToken).balanceOf(address(this));
-            if (quoteBalance >= minimumSwapAmount) {
-                uint256 expectedBaseOut = _getExpectedMinimumAmountOut(quoteBalance);
-                baseAmount += _swapToken(quoteToken, baseToken, quoteBalance, expectedBaseOut);
-            }
+        uint256 baseReceived = token0 == baseToken ? amount0 : amount1;
+        uint256 quoteReceived = token0 == baseToken ? amount1 : amount0;
 
-            accruedAssets =
-                baseAmount + ERC20(baseToken).balanceOf(address(this)).mulDiv(shares, totalShares, Math.Rounding.Floor);
-        } else {
-            accruedAssets = ERC20(baseToken).balanceOf(address(this)).mulDiv(shares, totalShares, Math.Rounding.Floor);
+        if (quoteReceived > 0) {
+            address[] memory path = new address[](2);
+            path[0] = quoteToken;
+            path[1] = baseToken;
+            uint256 amountOutMin = _getExpectedMinimumAmountOut(quoteReceived);
+            uint256[] memory amounts = IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
+                quoteReceived, amountOutMin, path, address(this), block.timestamp + 30
+            );
+            baseReceived += amounts[1];
         }
+
+        accruedAssets = baseReceived;
     }
 
     function afterDeposit(uint256 assets, uint256, bytes memory) internal override whenNotEmergencyStop {
         uint256 baseBalance = ERC20(baseToken).balanceOf(address(this));
+        emit DebugAfterDeposit(baseBalance, 0, 0, 0);
+
         if (baseBalance >= minimumSwapAmount) {
             uint256 amountToSwap = baseBalance / 2;
             uint256 expectedQuoteOut = _getExpectedMinimumAmountOut(amountToSwap);
+            emit DebugAfterDeposit(baseBalance, amountToSwap, expectedQuoteOut, 0);
+
             uint256 quoteReceived = _swapToken(baseToken, quoteToken, amountToSwap, expectedQuoteOut);
-            _addLiquidity(ERC20(baseToken).balanceOf(address(this)), quoteReceived);
+            emit DebugSwap(amountToSwap, quoteReceived, "swap after deposit");
+
+            uint256 remainingBase = ERC20(baseToken).balanceOf(address(this));
+            emit DebugAfterDeposit(baseBalance, amountToSwap, expectedQuoteOut, quoteReceived);
+
+            _addLiquidity(remainingBase, quoteReceived);
+        } else {
+            emit DebugAfterDeposit(baseBalance, 0, 0, 0);
         }
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                                    EXTERNAL FUNCTIONS
-    //////////////////////////////////////////////////////////////////////////*/
-
-    function emergencyWithdraw() external override onlyRouter {
-        uint256 lpBalance = IUniswapV2Pair(uniswapPair).balanceOf(address(this));
-        if (lpBalance > 0) {
-            (uint256 amount0, uint256 amount1) = _removeLiquidity(lpBalance);
-            (uint256 baseAmount, uint256 quoteAmount) = token0 == baseToken ? (amount0, amount1) : (amount1, amount0);
-
-            uint256 quoteBalance = ERC20(quoteToken).balanceOf(address(this));
-            if (quoteBalance >= minimumSwapAmount) {
-                uint256 expectedBaseOut = _getExpectedMinimumAmountOut(quoteBalance);
-                baseAmount += _swapToken(quoteToken, baseToken, quoteBalance, expectedBaseOut);
-            }
-
-            emit EmergencyWithdraw(address(uniswapPair), address(this), baseAmount, block.timestamp);
-        }
-        emergencyStop = true;
-    }
-
-    function setSlippageWhenSwapAsset(uint256 _slippageWhenSwapAsset) external onlyDelegateAdmin {
-        slippageWhenSwapAsset = _slippageWhenSwapAsset;
-    }
-
-    function setMinimumSwapAmount(uint256 _minimumSwapAmount) external onlyDelegateAdmin {
-        minimumSwapAmount = _minimumSwapAmount;
-    }
-
-    function isSupportUnderlyingAsset(address asset) public view override returns (bool) {
-        return asset == baseToken;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                 HELPER FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
-    function _setupUniswapPair(address uniswapFactory_, address baseToken_, address quoteToken_) private {
-        address pair = IUniswapV2Factory(uniswapFactory_).getPair(baseToken_, quoteToken_);
-        if (pair == address(0)) {
-            pair = IUniswapV2Factory(uniswapFactory_).createPair(baseToken_, quoteToken_);
-        }
-        uniswapPair = pair;
-        (token0, token1) = baseToken_ < quoteToken_ ? (baseToken_, quoteToken_) : (quoteToken_, baseToken_);
-    }
-
-    function _addLiquidity(uint256 baseAmount, uint256 quoteAmount) private {
-        (uint256 amountA, uint256 amountB,) = IUniswapV2Router02(uniswapRouter).addLiquidity(
-            token0,
-            token1,
-            token0 == baseToken ? baseAmount : quoteAmount,
-            token0 == baseToken ? quoteAmount : baseAmount,
-            0,
-            0,
-            address(this),
-            block.timestamp + 10 seconds
-        );
-    }
-
-    function _removeLiquidity(uint256 lpAmount) private returns (uint256 amount0, uint256 amount1) {
-        (amount0, amount1) = IUniswapV2Router02(uniswapRouter).removeLiquidity(
-            token0, token1, lpAmount, 0, 0, address(this), block.timestamp + 10 seconds
-        );
+    function _getExpectedMinimumAmountOut(uint256 amountIn) private view returns (uint256) {
+        address[] memory path = new address[](2);
+        path[0] = quoteToken;
+        path[1] = baseToken;
+        uint256[] memory amounts = IUniswapV2Router02(uniswapRouter).getAmountsOut(amountIn, path);
+        return amounts[1].mulDiv(10_000 - slippageWhenSwapAsset, 10_000, Math.Rounding.Floor);
     }
 
     function _swapToken(address tokenIn, address tokenOut, uint256 amountIn, uint256 amountOutMin)
@@ -240,24 +228,80 @@ contract MoneyFiStrategyUpgradeableUniswap is
         path[0] = tokenIn;
         path[1] = tokenOut;
 
-        uint256[] memory amounts = IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
-            amountIn, amountOutMin, path, address(this), block.timestamp + 10 seconds
+        try IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
+            amountIn, amountOutMin, path, address(this), block.timestamp + 30
+        ) returns (uint256[] memory amounts) {
+            emit DebugSwap(amountIn, amounts[1], "Swap executed");
+            return amounts[1];
+        } catch Error(string memory reason) {
+            revert(string(abi.encodePacked("Swap failed: ", reason)));
+        } catch {
+            revert("Swap failed: Unknown error");
+        }
+    }
+
+    function _addLiquidity(uint256 baseAmount, uint256 quoteAmount) private {
+        emit DebugAddLiquidity(baseAmount, quoteAmount, 0, 0);
+        try IUniswapV2Router02(uniswapRouter).addLiquidity(
+            token0,
+            token1,
+            token0 == baseToken ? baseAmount : quoteAmount,
+            token0 == baseToken ? quoteAmount : baseAmount,
+            0,
+            0,
+            address(this),
+            block.timestamp + 30
+        ) returns (uint256 amountA, uint256 amountB, uint256) {
+            emit DebugAddLiquidity(baseAmount, quoteAmount, amountA, amountB);
+        } catch Error(string memory reason) {
+            revert(string(abi.encodePacked("Add liquidity failed: ", reason)));
+        } catch {
+            revert("Add liquidity failed: Unknown error");
+        }
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                    EXTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////////////////*/
+
+    function setSlippageWhenSwapAsset(uint256 _slippageWhenSwapAsset) external override onlyDelegateAdmin {
+        slippageWhenSwapAsset = _slippageWhenSwapAsset;
+    }
+
+    function setMinimumSwapAmount(uint256 _minimumSwapAmount) external override onlyDelegateAdmin {
+        minimumSwapAmount = _minimumSwapAmount;
+    }
+
+    function isSupportUnderlyingAsset(address asset) external view override returns (bool) {
+        return asset == address(ASSET);
+    }
+
+    function emergencyWithdraw() external override onlyRouter whenNotEmergencyStop {
+        uint256 strategyLpBalance = ERC20(uniswapPair).balanceOf(address(this));
+        uint256 beforeEmergencyWithdraw = ERC20(baseToken).balanceOf(address(this));
+
+        (uint256 amount0, uint256 amount1) = IUniswapV2Router02(uniswapRouter).removeLiquidity(
+            token0, token1, strategyLpBalance, 0, 0, address(this), block.timestamp + 30
         );
-        return amounts[1];
-    }
 
-    function _convertQuoteToBase(uint256 quoteAmount) private view returns (uint256) {
-        if (quoteAmount == 0) return 0;
-        (uint256 reserve0, uint256 reserve1,) = IUniswapV2Pair(uniswapPair).getReserves();
-        (uint256 baseReserve, uint256 quoteReserve) = token0 == baseToken ? (reserve0, reserve1) : (reserve1, reserve0);
-        return IUniswapV2Router02(uniswapRouter).quote(quoteAmount, quoteReserve, baseReserve);
-    }
+        uint256 baseReceived = token0 == baseToken ? amount0 : amount1;
+        uint256 quoteReceived = token0 == baseToken ? amount1 : amount0;
 
-    function _getExpectedMinimumAmountOut(uint256 amountIn) private view returns (uint256) {
-        address[] memory path = new address[](2);
-        path[0] = quoteToken;
-        path[1] = baseToken;
-        uint256[] memory amounts = IUniswapV2Router02(uniswapRouter).getAmountsOut(amountIn, path);
-        return amounts[1].mulDiv(10_000 - slippageWhenSwapAsset, 10_000, Math.Rounding.Floor);
+        if (quoteReceived > 0) {
+            address[] memory path = new address[](2);
+            path[0] = quoteToken;
+            path[1] = baseToken;
+            uint256 amountOutMin = _getExpectedMinimumAmountOut(quoteReceived);
+            uint256[] memory amounts = IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
+                quoteReceived, amountOutMin, path, address(this), block.timestamp + 30
+            );
+            baseReceived += amounts[1];
+        }
+
+        uint256 afterEmergencyWithdraw = ERC20(baseToken).balanceOf(address(this));
+        uint256 withdrawAmount = afterEmergencyWithdraw - beforeEmergencyWithdraw;
+
+        emergencyStop = true;
+        emit EmergencyWithdraw(address(uniswapPair), address(this), withdrawAmount, block.timestamp);
     }
 }

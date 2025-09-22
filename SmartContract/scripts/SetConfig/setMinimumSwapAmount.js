@@ -1,15 +1,14 @@
-// scripts/SetConfig/setMinimumSwapAmount_StrategyUniLink.js
 const { ethers } = require("hardhat");
 require("dotenv").config();
 
-// npx hardhat run scripts/SetConfig/setMinimumSwapAmount_StrategyUniLink.js --network sepolia
+// npx hardhat run scripts/SetConfig/setMinimumSwapAmount.js --network sepolia
 async function main() {
     const [deployer] = await ethers.getSigners();
 
     const strategyAddress = process.env.UNISWAP_V2_UNI_LINK; // Strategy UNI/LINK từ .env
     const targetMinimumSwapAmount = ethers.parseUnits("0.000001", 18); // 0.000001 UNI (điều chỉnh nếu cần)
 
-    const strategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswapV2", strategyAddress, deployer);
+    const strategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswap", strategyAddress, deployer);
 
     console.log("Deployer address:", deployer.address);
     console.log("Strategy address:", strategyAddress);

@@ -12,9 +12,9 @@ async function main() {
     const routerAddress = process.env.MONEYFI_ROUTER;
     const fundVaultAddress = process.env.MONEYFI_FUND_VAULT;
     const usdcAddress = process.env.USDC_SEPOLIA_ADDRESS;
-    const baseTokenAddress = process.env.LINK_SEPOLIA_ADDRESS;
-    const strategyAddress = process.env.UNISWAP_V2_LINK_WETH; // Strategy deploy
-    const pairAddress = "0x6561cF90FDE56d6ADCcAa818C9bee07E0668d229"; // token/quote pair
+    const baseTokenAddress = process.env.USDC_SEPOLIA_ADDRESS;
+    const strategyAddress = process.env.UNISWAP_V2_USDC_ARB; // Strategy deploy
+    const pairAddress = "0x78D0b232670d02f12CD294201cd35b724F1ab0Da"; // token/quote pair
     const controllerAddress = process.env.MONEYFI_CONTROLLER;
     const moneyFiUniSwapAddress = process.env.UNISWAP_DEX_ADDRESS; // Địa chỉ MoneyFiUniSwap
     const tokenLpAddress = process.env.MONEYFI_TOKEN_LP;
@@ -52,7 +52,7 @@ async function main() {
     console.log(`Minimum Swap Amount: ${ethers.formatUnits(minimumSwapAmount, 18)} BaseToken`);
 
     // 1. Kiểm tra dữ liệu đầu vào
-    const amount = ethers.parseUnits("4", 6); // 1 USDC
+    const amount = ethers.parseUnits("250", 6); // 1 USDC
     const depositParam = {
         strategyAddress: strategyAddress,
         depositor: user.address,
@@ -159,7 +159,7 @@ async function main() {
 
     // 10. Thực hiện deposit
     console.log("=================================================================");
-    console.log("Deployer đang deposit 1 USDC vào Strategy cho user...");
+    console.log("Deployer đang deposit 250 USDC vào Strategy cho user...");
     try {
         const depositTx = await router
             .connect(deployer)

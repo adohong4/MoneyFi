@@ -13,7 +13,7 @@ async function main() {
     const routerAddress = process.env.MONEYFI_ROUTER;
     const fundVaultAddress = process.env.MONEYFI_FUND_VAULT;
     const usdcAddress = process.env.USDC_SEPOLIA_ADDRESS;
-    const strategyAddress = process.env.MONEYFI_STRATEGY_UPGRADEABLE_UNISWAP_V2;
+    const strategyAddress = process.env.UNISWAP_V2_USDC_WETH;
     const tokenLpAddress = process.env.MONEYFI_TOKEN_LP;
     const pairAddress = "0x72e46e15ef83c896de44B1874B4AF7dDAB5b4F74";
     const controllerAddress = process.env.MONEYFI_CONTROLLER;
@@ -41,13 +41,13 @@ async function main() {
     }
 
     // 1. Kiểm tra dữ liệu đầu vào
-    const amount = ethers.parseUnits("1", 6); // 1 USDC
+    const amount = ethers.parseUnits("50", 6); // 1 USDC
     const depositParam = {
         strategyAddress: strategyAddress,
         depositor: user.address,
         depositedTokenAddress: usdcAddress,
         amount: amount,
-        distributionFee: ethers.parseUnits("0.0", 6),
+        distributionFee: ethers.parseUnits("0.01", 6),
         externalCallData: ethers.getBytes("0x"),
     };
     const swapTokenParam = {
@@ -143,7 +143,7 @@ async function main() {
     try {
         const depositTx = await router
             .connect(deployer)
-            .depositFundToStrategySameChainFromOperator(depositParam, swapTokenParam, { gasLimit: 500000 });
+            .depositFundToStrategySameChainFromOperator(depositParam, swapTokenParam, { gasLimit: 1000000 });
         await depositTx.wait();
         console.log("Deposit successful, tx:", depositTx.hash);
     } catch (error) {

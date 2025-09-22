@@ -1,187 +1,131 @@
 const { ethers } = require("hardhat");
+const { getAddresses } = require("../scripts/contractAddresses");
 require("dotenv").config();
 
 // npx hardhat run test/getUserBalance.js --network sepolia
+
 async function main() {
-    // Lấy tài khoản
     const [deployer, user] = await ethers.getSigners();
-    console.log(`Địa chỉ Deployer: ${deployer.address}`);
-    console.log(`Địa chỉ User: ${user.address}`);
+    console.log(`Fetching balance for user: ${user.address}`);
 
-    // Địa chỉ hợp đồng từ .env
-    const fundVaultAddress = process.env.MONEYFI_FUND_VAULT;
+    // Đọc địa chỉ từ .env và contractAddresses
+    const addresses = getAddresses();
     const usdcAddress = process.env.USDC_SEPOLIA_ADDRESS;
-    const uniAddress = process.env.UNI_SEPOLIA_ADDRESS;
-    const linkAddress = process.env.LINK_SEPOLIA_ADDRESS;
     const wethAddress = process.env.WETH_SEPOLIA_ADDRESS;
-    const arbAddress = process.env.ARB_SEPOLIA_ADDRESS;
-    const uniLinkStrategyAddress = process.env.UNISWAP_V2_UNI_LINK;
-    const usdcArbStrategyAddress = process.env.UNISWAP_V2_USDC_ARB;
-    const usdcWethStrategyAddress = process.env.MONEYFI_STRATEGY_UPGRADEABLE_UNISWAP_V2;
-    const tokenLpAddress = process.env.MONEYFI_TOKEN_LP;
-    const uniswapDexAddress = process.env.UNISWAP_DEX_ADDRESS;
+    const linkAddress = process.env.LINK_SEPOLIA_ADDRESS;
+    const arbAddress = process.env.ARB_SEPOLIA_ADDRESS; // Thêm cho ARB
+    const fundVaultAddress = addresses.MoneyFiFundVault;
+    const usdcWethStrategyAddress = "0xf85684015cBe22B669bFb6efE278c8F72c048969"; // UNISWAP_V2_USDC_WETH
+    const usdcLinkStrategyAddress = "0x3187d2b296fe836519d35081460d5655716d33f9"; // UNISWAP_V2_USDC_LINK
+    const usdcArbStrategyAddress = "0xf19Bd3FdB85169223Bbd085cC91043Bf676633Cf"; // Thay bằng địa chỉ thực tế của UNISWAP_V2_USDC_ARB strategy
+    const uniswapRouterAddress = process.env.UNISWAP_V2_ROUTER;
 
-    // Kiểm tra biến môi trường
-    if (!fundVaultAddress || !usdcAddress || !uniAddress || !linkAddress || !wethAddress || !arbAddress || !uniLinkStrategyAddress || !usdcArbStrategyAddress || !usdcWethStrategyAddress || !tokenLpAddress || !uniswapDexAddress) {
-        throw new Error("Thiếu địa chỉ hợp đồng trong file .env");
-    }
+    // Kiểm tra địa chỉ
+    if (!usdcAddress) throw new Error("USDC_SEPOLIA_ADDRESS is not defined in .env");
+    if (!wethAddress) throw new Error("WETH_SEPOLIA_ADDRESS is not defined in .env");
+    if (!linkAddress) throw new Error("LINK_SEPOLIA_ADDRESS is not defined in .env");
+    if (!arbAddress) throw new Error("ARB_SEPOLIA_ADDRESS is not defined in .env"); // Thêm kiểm tra
+    if (!fundVaultAddress) throw new Error("MoneyFiFundVault is not defined in contractAddresses");
+    if (!usdcWethStrategyAddress) throw new Error("UNISWAP_V2_USDC_WETH is not defined");
+    if (!usdcLinkStrategyAddress) throw new Error("UNISWAP_V2_USDC_LINK is not defined");
+    if (!usdcArbStrategyAddress) throw new Error("UNISWAP_V2_USDC_ARB is not defined"); // Thêm kiểm tra
+    if (!uniswapRouterAddress) throw new Error("UNISWAP_V2_ROUTER is not defined in .env");
 
     // Kết nối hợp đồng
-    const fundVault = await ethers.getContractAt("MoneyFiFundVault", fundVaultAddress, deployer);
-    const uniLinkStrategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswapV2", uniLinkStrategyAddress, deployer);
-    const usdcArbStrategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswapV2", usdcArbStrategyAddress, deployer);
-    const usdcWethStrategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswapV2", usdcWethStrategyAddress, deployer);
-    const tokenLp = await ethers.getContractAt("MoneyFiTokenLp", tokenLpAddress, deployer);
-    const moneyFiUniSwap = await ethers.getContractAt("MoneyFiUniSwap", uniswapDexAddress, deployer);
-
-    // Lấy địa chỉ Uniswap V2 Factory
-    const factory = await ethers.getContractAt(
-        "@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol:IUniswapV2Factory",
-        await moneyFiUniSwap.factoryV2(),
-        deployer
+    const usdc = await ethers.getContractAt("IERC20", usdcAddress, user);
+    const fundVault = await ethers.getContractAt("MoneyFiFundVault", fundVaultAddress, user);
+    const usdcWethStrategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswap", usdcWethStrategyAddress, user);
+    const usdcLinkStrategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswap", usdcLinkStrategyAddress, user);
+    const usdcArbStrategy = await ethers.getContractAt("MoneyFiStrategyUpgradeableUniswap", usdcArbStrategyAddress, user); // Thêm kết nối
+    const uniswapRouter = await ethers.getContractAt(
+        "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol:IUniswapV2Router02",
+        uniswapRouterAddress,
+        user
     );
 
-    // Hàm lấy giá từ Uniswap V2 pool (USDC/Token hoặc Token/USDC)
-    async function getPriceFromPool(tokenAddress, poolAddress) {
-        if (poolAddress === ethers.ZeroAddress) {
-            console.log(`Pool ${tokenAddress}/USDC không tồn tại`);
-            return 0;
-        }
-        const pair = await ethers.getContractAt("IUniswapV2Pair", poolAddress, deployer);
-        const [reserve0, reserve1] = await pair.getReserves();
-        const token0 = await pair.token0();
-        const isUsdcToken0 = token0.toLowerCase() === usdcAddress.toLowerCase();
-        const usdcReserve = isUsdcToken0 ? reserve0 : reserve1;
-        const tokenReserve = isUsdcToken0 ? reserve1 : reserve0;
-        console.log(`Reserve USDC trong pool ${poolAddress}: ${ethers.formatUnits(usdcReserve, 6)} USDC`);
-        console.log(`Reserve token (${tokenAddress}) trong pool ${poolAddress}: ${ethers.formatUnits(tokenReserve, 18)}`);
-        if (tokenReserve === 0n) {
-            console.log("Token reserve bằng 0, giá = 0");
-            return 0;
-        }
-        const price = Number(ethers.formatUnits(usdcReserve, 6)) / Number(ethers.formatUnits(tokenReserve, 18));
-        const usdcValue = Number(ethers.formatUnits(usdcReserve, 6));
-        if (usdcValue < 10) {
-            console.log(`Cảnh báo: Thanh khoản pool ${poolAddress} thấp (${usdcValue} USDC), giá có thể không chính xác`);
-        }
-        return price;
-    }
-
-    // Hàm tính giá trị shares trong pool UNI/LINK
-    async function getUniLinkSharesValue(shares, poolAddress, uniPrice, linkPrice) {
-        const pair = await ethers.getContractAt("IUniswapV2Pair", poolAddress, deployer);
-        const totalSupply = await pair.totalSupply();
-        const [reserve0, reserve1] = await pair.getReserves();
-        const token0 = await pair.token0();
-        const isUniToken0 = token0.toLowerCase() === uniAddress.toLowerCase();
-        const uniReserve = isUniToken0 ? reserve0 : reserve1;
-        const linkReserve = isUniToken0 ? reserve1 : reserve0;
-        console.log(`Dự trữ pool UNI/LINK (${poolAddress}):`);
-        console.log(`  UNI: ${ethers.formatUnits(uniReserve, 18)} UNI`);
-        console.log(`  LINK: ${ethers.formatUnits(linkReserve, 18)} LINK`);
-
-        // Tính giá trị TVL của pool
-        const uniValueInUsdc = Number(ethers.formatUnits(uniReserve, 18)) * uniPrice;
-        const linkValueInUsdc = Number(ethers.formatUnits(linkReserve, 18)) * linkPrice;
-        const totalValue = uniValueInUsdc + linkValueInUsdc;
-        console.log(`Giá trị TVL của pool: ${totalValue.toFixed(6)} USDC`);
-
-        // Tính số UNI và LINK của user dựa trên shares
-        const shareRatio = Number(ethers.formatUnits(shares, 18)) / Number(ethers.formatUnits(totalSupply, 18));
-        const userUni = Number(ethers.formatUnits(uniReserve, 18)) * shareRatio;
-        const userLink = Number(ethers.formatUnits(linkReserve, 18)) * shareRatio;
-        console.log(`Shares của user: ${ethers.formatUnits(shares, 18)}`);
-        console.log(`Tỷ lệ shares: ${shareRatio}`);
-        console.log(`UNI của user: ${userUni.toFixed(18)} UNI`);
-        console.log(`LINK của user: ${userLink.toFixed(18)} LINK`);
-
-        // Quy đổi sang USDC
-        const userUniValue = userUni * uniPrice;
-        const userLinkValue = userLink * linkPrice;
-        const totalShareValue = userUniValue + userLinkValue;
-        console.log(`Giá trị UNI của user: ${userUniValue.toFixed(6)} USDC`);
-        console.log(`Giá trị LINK của user: ${userLinkValue.toFixed(6)} USDC`);
-        console.log(`Tổng giá trị shares trong pool UNI/LINK: ${totalShareValue.toFixed(6)} USDC`);
-        return totalShareValue;
-    }
-
-    // Lấy giá từ các pool
-    console.log("\nĐang lấy giá từ Uniswap V2 pool trên Sepolia...");
-    const usdcUniPoolAddress = await factory.getPair(usdcAddress, uniAddress);
-    const uniPrice = await getPriceFromPool(uniAddress, usdcUniPoolAddress);
-    console.log(`Pool USDC/UNI address: ${usdcUniPoolAddress}`);
-    console.log(`Giá UNI/USDC từ pool: ${uniPrice.toFixed(6)} USDC`);
-
-    const usdcLinkPoolAddress = await factory.getPair(usdcAddress, linkAddress);
-    const linkPrice = await getPriceFromPool(linkAddress, usdcLinkPoolAddress);
-    console.log(`Pool USDC/LINK address: ${usdcLinkPoolAddress}`);
-    console.log(`Giá LINK/USDC từ pool: ${linkPrice.toFixed(6)} USDC`);
-
-    const usdcArbPoolAddress = await factory.getPair(usdcAddress, arbAddress);
-    const arbPrice = await getPriceFromPool(arbAddress, usdcArbPoolAddress);
-    console.log(`Pool USDC/ARB address: ${usdcArbPoolAddress}`);
-    console.log(`Giá ARB/USDC từ pool: ${arbPrice.toFixed(6)} USDC`);
-
-    const usdcWethPoolAddress = await factory.getPair(usdcAddress, wethAddress);
-    const wethPrice = await getPriceFromPool(wethAddress, usdcWethPoolAddress);
-    console.log(`Pool USDC/WETH address: ${usdcWethPoolAddress}`);
-    console.log(`Giá WETH/USDC từ pool: ${wethPrice.toFixed(6)} USDC`);
-
-    // 1. Balance trong pool UNI/LINK
-    console.log("\n=== Balance trong pool UNI/LINK ===");
-    const uniLinkShares = await uniLinkStrategy.balanceOf(user.address);
-    const uniLinkPoolAddress = await uniLinkStrategy.uniswapPair();
-    const uniLinkShareValue = await getUniLinkSharesValue(uniLinkShares, uniLinkPoolAddress, uniPrice, linkPrice);
-    console.log(`Giá trị có thể rút (USDC): ${uniLinkShareValue.toFixed(6)} USDC`);
-
-    // 2. Balance trong pool USDC/ARB
-    console.log("\n=== Balance trong pool USDC/ARB ===");
-    const usdcArbShares = await usdcArbStrategy.balanceOf(user.address);
-    console.log(`Shares của user: ${ethers.formatUnits(usdcArbShares, 18)} shares`);
-    const usdcArbAssets = await usdcArbStrategy.convertToAssets(usdcArbShares);
-    const usdcArbBalance = ethers.formatUnits(usdcArbAssets, 6);
-    console.log(`Tài sản USDC tương ứng: ${usdcArbBalance} USDC`);
-    const usdcArbValueInUsdc = Number(usdcArbBalance);
-    console.log(`Giá trị có thể rút (USDC): ${usdcArbValueInUsdc.toFixed(6)} USDC`);
-
-    // 3. Balance trong pool USDC/WETH
-    console.log("\n=== Balance trong pool USDC/WETH ===");
-    const usdcWethShares = await usdcWethStrategy.balanceOf(user.address);
-    console.log(`Shares của user: ${ethers.formatUnits(usdcWethShares, 18)} shares`);
-    const usdcWethAssets = await usdcWethStrategy.convertToAssets(usdcWethShares);
-    const usdcWethBalance = ethers.formatUnits(usdcWethAssets, 6);
-    console.log(`Tài sản USDC tương ứng: ${usdcWethBalance} USDC`);
-    const usdcWethValueInUsdc = Number(usdcWethBalance);
-    console.log(`Giá trị có thể rút (USDC): ${usdcWethValueInUsdc.toFixed(6)} USDC`);
-
-    // 4. Balance trong MoneyFiFundVault
-    console.log("\n=== Balance trong MoneyFiFundVault ===");
+    // Lấy số dư trong MoneyFiFundVault
     const userDepositInfo = await fundVault.getUserDepositInfor(usdcAddress, user.address);
-    console.log("Thông tin deposit của user:");
-    console.log("  Số dư gốc:", ethers.formatUnits(userDepositInfo.originalDepositAmount, 6), "USDC");
-    console.log("  Số dư hiện tại (có thể rút):", ethers.formatUnits(userDepositInfo.currentDepositAmount, 6), "USDC");
-    const fundVaultValueInUsdc = Number(ethers.formatUnits(userDepositInfo.currentDepositAmount, 6));
-    console.log(`Giá trị có thể rút từ FundVault (USDC): ${fundVaultValueInUsdc.toFixed(6)} USDC`);
+    const originalDeposit = ethers.formatUnits(userDepositInfo.originalDepositAmount, 6);
+    const currentDeposit = ethers.formatUnits(userDepositInfo.currentDepositAmount, 6);
+    console.log(`\n=== MoneyFiFundVault Balance ===`);
+    console.log(`Original Deposit (USDC): ${originalDeposit}`);
+    console.log(`Current Deposit (USDC): ${currentDeposit}`);
 
-    // Kiểm tra số dư mUSDC
-    const mUsdcBalance = await tokenLp.balanceOf(user.address);
-    console.log(`Số dư mUSDC: ${ethers.formatUnits(mUsdcBalance, 6)} mUSDC (đại diện cho FundVault, không cộng riêng)`);
+    // Lấy số dư trong pool USDC/WETH
+    const usdcWethShares = await usdcWethStrategy.balanceOf(user.address);
+    const usdcWethAssets = await usdcWethStrategy.convertToAssets(usdcWethShares);
+    const usdcWethPair = await ethers.getContractAt("IUniswapV2Pair", await usdcWethStrategy.uniswapPair());
+    const [reserve0Weth, reserve1Weth] = await usdcWethPair.getReserves();
+    const token0Weth = await usdcWethPair.token0();
+    const baseReserveWeth = token0Weth === usdcAddress ? reserve0Weth : reserve1Weth;
+    const quoteReserveWeth = token0Weth === usdcAddress ? reserve1Weth : reserve0Weth;
+    const totalLpSupplyWeth = await usdcWethPair.totalSupply();
+    const userLpBalanceWeth = await usdcWethPair.balanceOf(usdcWethStrategyAddress);
+    const lpBaseValueWeth = userLpBalanceWeth * baseReserveWeth / totalLpSupplyWeth;
+    const lpQuoteValueWeth = userLpBalanceWeth * quoteReserveWeth / totalLpSupplyWeth;
+    const quoteToBaseWeth = lpQuoteValueWeth > 0 ? (await uniswapRouter.getAmountsOut(lpQuoteValueWeth, [wethAddress, usdcAddress]))[1] : 0n;
+    const totalPoolValueWeth = lpBaseValueWeth + quoteToBaseWeth;
 
-    // 5. Tổng kết giá trị có thể rút
-    console.log("\n=== Tổng kết giá trị có thể rút (USDC) ===");
-    const totalFromPools = uniLinkShareValue + usdcArbValueInUsdc + usdcWethValueInUsdc;
-    const totalFromFundVault = fundVaultValueInUsdc;
-    const grandTotal = totalFromPools + totalFromFundVault;
-    console.log(`Từ pool UNI/LINK: ${uniLinkShareValue.toFixed(6)} USDC`);
-    console.log(`Từ pool USDC/ARB: ${usdcArbValueInUsdc.toFixed(6)} USDC`);
-    console.log(`Từ pool USDC/WETH: ${usdcWethValueInUsdc.toFixed(6)} USDC`);
-    console.log(`Từ FundVault (USDC): ${fundVaultValueInUsdc.toFixed(6)} USDC`);
-    console.log(`TỔNG CÓ THỂ RÚT: ${grandTotal.toFixed(6)} USDC`);
+    console.log(`\n=== USDC/WETH Pool Balance ===`);
+    console.log(`User Shares: ${ethers.formatUnits(usdcWethShares, 18)} shares`);
+    console.log(`Assets from Shares (USDC): ${ethers.formatUnits(usdcWethAssets, 6)}`);
+    console.log(`Pool Reserves: ${ethers.formatUnits(baseReserveWeth, 6)} USDC, ${ethers.formatUnits(quoteReserveWeth, 18)} WETH`);
+    console.log(`Strategy LP Balance: ${ethers.formatUnits(userLpBalanceWeth, 18)} LP tokens`);
+    console.log(`Pool Value in USDC: ${ethers.formatUnits(totalPoolValueWeth, 6)}`);
+
+    // Lấy số dư trong pool USDC/LINK
+    const usdcLinkShares = await usdcLinkStrategy.balanceOf(user.address);
+    const usdcLinkAssets = await usdcLinkStrategy.convertToAssets(usdcLinkShares);
+    const usdcLinkPair = await ethers.getContractAt("IUniswapV2Pair", await usdcLinkStrategy.uniswapPair());
+    const [reserve0Link, reserve1Link] = await usdcLinkPair.getReserves();
+    const token0Link = await usdcLinkPair.token0();
+    const baseReserveLink = token0Link === usdcAddress ? reserve0Link : reserve1Link;
+    const quoteReserveLink = token0Link === usdcAddress ? reserve1Link : reserve0Link;
+    const totalLpSupplyLink = await usdcLinkPair.totalSupply();
+    const userLpBalanceLink = await usdcLinkPair.balanceOf(usdcLinkStrategyAddress);
+    const lpBaseValueLink = userLpBalanceLink * baseReserveLink / totalLpSupplyLink;
+    const lpQuoteValueLink = userLpBalanceLink * quoteReserveLink / totalLpSupplyLink;
+    const quoteToBaseLink = lpQuoteValueLink > 0 ? (await uniswapRouter.getAmountsOut(lpQuoteValueLink, [linkAddress, usdcAddress]))[1] : 0n;
+    const totalPoolValueLink = lpBaseValueLink + quoteToBaseLink;
+
+    console.log(`\n=== USDC/LINK Pool Balance ===`);
+    console.log(`User Shares: ${ethers.formatUnits(usdcLinkShares, 18)} shares`);
+    console.log(`Assets from Shares (USDC): ${ethers.formatUnits(usdcLinkAssets, 6)}`);
+    console.log(`Pool Reserves: ${ethers.formatUnits(baseReserveLink, 6)} USDC, ${ethers.formatUnits(quoteReserveLink, 18)} LINK`);
+    console.log(`Strategy LP Balance: ${ethers.formatUnits(userLpBalanceLink, 18)} LP tokens`);
+    console.log(`Pool Value in USDC: ${ethers.formatUnits(totalPoolValueLink, 6)}`);
+
+    // Lấy số dư trong pool USDC/ARB (thêm mới)
+    const usdcArbShares = await usdcArbStrategy.balanceOf(user.address);
+    const usdcArbAssets = await usdcArbStrategy.convertToAssets(usdcArbShares);
+    const usdcArbPair = await ethers.getContractAt("IUniswapV2Pair", await usdcArbStrategy.uniswapPair());
+    const [reserve0Arb, reserve1Arb] = await usdcArbPair.getReserves();
+    const token0Arb = await usdcArbPair.token0();
+    const baseReserveArb = token0Arb === usdcAddress ? reserve0Arb : reserve1Arb;
+    const quoteReserveArb = token0Arb === usdcAddress ? reserve1Arb : reserve0Arb;
+    const totalLpSupplyArb = await usdcArbPair.totalSupply();
+    const userLpBalanceArb = await usdcArbPair.balanceOf(usdcArbStrategyAddress);
+    const lpBaseValueArb = userLpBalanceArb * baseReserveArb / totalLpSupplyArb;
+    const lpQuoteValueArb = userLpBalanceArb * quoteReserveArb / totalLpSupplyArb;
+    const quoteToBaseArb = lpQuoteValueArb > 0 ? (await uniswapRouter.getAmountsOut(lpQuoteValueArb, [arbAddress, usdcAddress]))[1] : 0n;
+    const totalPoolValueArb = lpBaseValueArb + quoteToBaseArb;
+
+    console.log(`\n=== USDC/ARB Pool Balance ===`);
+    console.log(`User Shares: ${ethers.formatUnits(usdcArbShares, 18)} shares`);
+    console.log(`Assets from Shares (USDC): ${ethers.formatUnits(usdcArbAssets, 6)}`);
+    console.log(`Pool Reserves: ${ethers.formatUnits(baseReserveArb, 6)} USDC, ${ethers.formatUnits(quoteReserveArb, 18)} ARB`);
+    console.log(`Strategy LP Balance: ${ethers.formatUnits(userLpBalanceArb, 18)} LP tokens`);
+    console.log(`Pool Value in USDC: ${ethers.formatUnits(totalPoolValueArb, 6)}`);
+
+    // Tổng hợp số dư (cập nhật để cộng thêm USDC/ARB)
+    const totalBalance = BigInt(userDepositInfo.currentDepositAmount) + BigInt(usdcWethAssets) + BigInt(usdcLinkAssets) + BigInt(usdcArbAssets);
+    console.log(`\n=== Total Balance ===`);
+    console.log(`Total Balance in USDC: ${ethers.formatUnits(totalBalance, 6)}`);
 }
 
 main()
     .then(() => process.exit(0))
     .catch((error) => {
-        console.error("Lỗi:", error.message);
+        console.error(error);
         process.exit(1);
     });

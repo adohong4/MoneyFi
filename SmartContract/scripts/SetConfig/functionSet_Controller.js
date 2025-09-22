@@ -46,16 +46,16 @@ async function main() {
     // await moneyFiController.connect(deployer).setHotWallet(deployer.address);
     // console.log("Set HotWallet address:", deployer.address);
 
-    // // 6. Set Strategy Internal (Uniswap Strategy)
-    // await moneyFiController.connect(deployer).setStrategyInternal(
-    //     addresses.MoneyFiStrategyUpgradeableUniswap,
-    //     {
-    //         name: "UniswapV2 USDC/ARB Strategy",
-    //         chainId: 11155111,
-    //         isActive: true,
-    //     }
-    // );
-    // console.log("Set StrategyInternal for Uniswap Strategy");
+    // 6. Set Strategy Internal (Uniswap Strategy)
+    await moneyFiController.connect(deployer).setStrategyInternal(
+        "0xcc6c99b5450344005fdd5487ef52c952b8bbc535",
+        {
+            name: "UNI_LINK_Inactive",
+            chainId: 11155111,
+            isActive: true,
+        }
+    );
+    console.log("Set StrategyInternal for Uniswap Strategy");
 
     // // 8. Set Referral Fee (ví dụ: 10% của protocol fee)
     // const referralFee = ethers.parseUnits("100", 0); // 1% (100/10000)
@@ -63,8 +63,8 @@ async function main() {
     // console.log("Set Referral Fee:", referralFee.toString());
 
     // 9. Enable Referral Signature
-    await moneyFiController.connect(deployer).setEnableReferralSignature(false);
-    console.log("Enabled Referral Signature");
+    // await moneyFiController.connect(deployer).setEnableReferralSignature(false);
+    // console.log("Enabled Referral Signature");
 
     // // 10. Set Max Percent Liquidity Strategy for USDC
     // const maxPercentLiquidity = ethers.parseUnits("10000", 0);
@@ -76,17 +76,17 @@ async function main() {
     // await moneyFiController.connect(deployer).setMaxDepositValue(USDC_ADDRESS, maxDepositValue);
     // console.log("Set Max Deposit Value for USDC:", maxDepositValue.toString());
 
-    // // 12. Set Average System Action Fee (ví dụ: 0.01 ETH)
-    // const averageSystemActionFee = ethers.parseUnits("0.01", 18);
+    // 12. Set Average System Action Fee (0.01 USDC, 6 decimals)
+    // const averageSystemActionFee = ethers.parseUnits("0.01", 18); // 0.01 USDC
     // await moneyFiController.connect(deployer).setAverageSystemActionFee(averageSystemActionFee);
-    // console.log("Set Average System Action Fee:", averageSystemActionFee.toString());
+    // console.log("Set Average System Action Fee:", ethers.formatUnits(averageSystemActionFee, 18), "USDC");
 
     // // Xác minh một số thông tin
     // console.log("\nVerifying configurations...");
     // const tokenInfo = await moneyFiController.getSupportedTokenInternalInfor(USDC_ADDRESS);
     // console.log("Token Info for USDC:", tokenInfo);
-    // const isStrategyActive = await moneyFiController.isStrategyInternalActive(addresses.MoneyFiStrategyUpgradeableUniswap);
-    // console.log("Is Uniswap Strategy Active:", isStrategyActive);
+    const isStrategyActive = await moneyFiController.isStrategyInternalActive(addresses.UniswapV2_UNI_LINK);
+    console.log("Is Uniswap Strategy Active:", isStrategyActive);
     // const routerAddress = await moneyFiController.router();
     // console.log("Router address:", routerAddress);
     // const crossChainRouterAddress = await moneyFiController.crossChainRouter();

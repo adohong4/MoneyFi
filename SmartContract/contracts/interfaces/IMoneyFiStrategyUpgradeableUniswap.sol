@@ -2,6 +2,8 @@
 pragma solidity ^0.8.20;
 
 interface IMoneyFiStrategyUpgradeableUniswap {
+    error InvalidPair();
+
     function uniswapRouter() external view returns (address);
     function uniswapPair() external view returns (address);
     function token0() external view returns (address);

@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat");
 require("dotenv").config();
 
-// npx hardhat run test/deposit/pool/addPoolUsdc_Arb.js --network sepolia
+// npx hardhat run test/deposit/pool/addPoolUsdc_Link.js --network sepolia
 
 async function main() {
     // Lấy tài khoản
@@ -13,11 +13,11 @@ async function main() {
     const routerAddress = process.env.MONEYFI_ROUTER;
     const fundVaultAddress = process.env.MONEYFI_FUND_VAULT;
     const usdcAddress = process.env.USDC_SEPOLIA_ADDRESS;
-    const strategyAddress = process.env.UNISWAP_V2_USDC_ARB;
+    const strategyAddress = process.env.UNISWAP_V2_USDC_LINK;
     const tokenLpAddress = process.env.MONEYFI_TOKEN_LP;
-    const pairAddress = "0x78D0b232670d02f12CD294201cd35b724F1ab0Da";
+    const pairAddress = "0xaf84D32Abbb08d9Fa84b2a144AE176aB6f909069";
     const controllerAddress = process.env.MONEYFI_CONTROLLER;
-    const arbAddress = process.env.ARB_SEPOLIA_ADDRESS;
+    const linkAddress = process.env.LINK_SEPOLIA_ADDRESS;
 
     // Kiểm tra biến môi trường
     if (!usdcAddress || !strategyAddress || !routerAddress || !fundVaultAddress || !tokenLpAddress || !controllerAddress) {
@@ -135,7 +135,7 @@ async function main() {
     const [reserve0, reserve1] = await pair.getReserves();
     console.log("Pool reserves before deposit:", {
         USDC: ethers.formatUnits(reserve0, 6),
-        ARB: ethers.formatUnits(reserve1, 18),
+        LINK: ethers.formatUnits(reserve1, 18),
     });
 
     // 8. Thực hiện deposit
@@ -162,7 +162,7 @@ async function main() {
     const [reserve0After, reserve1After] = await pair.getReserves();
     console.log("Pool reserves after deposit:", {
         USDC: ethers.formatUnits(reserve0After, 6),
-        ARB: ethers.formatUnits(reserve1After, 18),
+        LINK: ethers.formatUnits(reserve1After, 18),
     });
 
     const updatedDepositInfo = await fundVault.getUserDepositInfor(usdcAddress, user.address);
