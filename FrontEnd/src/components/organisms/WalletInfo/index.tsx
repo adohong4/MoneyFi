@@ -72,7 +72,7 @@ export const WalletDashboard = () => {
   const availablePoolBalance = selectedPools.length
     ? userBalance?.poolBalances
       .filter((pool) => selectedPools.includes(pool.strategyAddress))
-      .reduce((sum, pool) => sum + Number(pool.poolValueInUSDC), 0) || 0
+      .reduce((sum, pool) => sum + Number(pool.assets), 0) || 0
     : 0
 
   // Check if withdrawal is possible
@@ -183,15 +183,7 @@ export const WalletDashboard = () => {
                 <span className="text-primary">{withdrawAmount.toFixed(3)} USDC</span>
               </div>
             </div>
-            <Button
-              className="w-full"
-              size="lg"
-              variant="destructive"
-              onClick={handleWithdraw}
-              disabled={loading || withdrawAmount <= 0 || !canWithdraw}
-            >
-              {loading ? "Processing..." : `Withdraw ${withdrawAmount.toFixed(6)} USDC`}
-            </Button>
+
           </div>
           {/* Pool Selection (shown only if withdrawAmount > currentFundVault) */}
 
@@ -205,10 +197,19 @@ export const WalletDashboard = () => {
                   onCheckedChange={() => handlePoolSelection(pool.strategyAddress)}
                 />
                 <Label htmlFor={pool.strategyAddress} className="text-sm">
-                  {pool.poolName} ({Number(pool.poolValueInUSDC).toFixed(2)} USDC)
+                  {pool.poolName} ({Number(pool.assets).toFixed(2)} USDC)
                 </Label>
               </div>
             ))}
+            <Button
+              className="w-full"
+              size="lg"
+              variant="destructive"
+              onClick={handleWithdraw}
+              disabled={loading || withdrawAmount <= 0 || !canWithdraw}
+            >
+              {loading ? "Processing..." : `Withdraw ${withdrawAmount.toFixed(6)} USDC`}
+            </Button>
           </div>
 
         </div>

@@ -34,7 +34,7 @@ export default function DeFiDashboard() {
               <div className="flex items-center gap-4">
                 <Navigation />
                 <WalletConnect />
-                <ThemeToggle />
+                {/* <ThemeToggle /> */}
               </div>
             </div>
           </div>

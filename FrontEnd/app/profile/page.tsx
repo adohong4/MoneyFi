@@ -58,9 +58,9 @@ export default function ProfilePage() {
 
               <div className="flex items-center gap-4">
                 <Navigation />
-                <DepositModal />
+                {/* <DepositModal /> */}
                 <WalletConnect />
-                <ThemeToggle />
+                {/* <ThemeToggle /> */}
               </div>
             </div>
           </div>
