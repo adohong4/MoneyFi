@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db.mongodb');
 const TriggerPoolService = require('./services/triggerPool.service');
+const RebalancePoolService = require('./services/triggerRebalance.service');
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use('/images', express.static('upload'));
 
 // Starting listener
 TriggerPoolService.startDepositListener().catch(console.error);
+//RebalancePoolService.start();
 
 // Handling errors
 app.use((req, res, next) => {

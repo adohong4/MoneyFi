@@ -10,7 +10,7 @@ import { UserProfile } from "@/components/user-profile"
 import { useAccount } from "wagmi"
 import { Toaster } from "@/components/ui/toaster"
 import { TrendingUp, Wallet } from "lucide-react"
-import { WalletInfo } from "@/src/components/organisms/WalletInfo"
+import { WalletDashboard } from "@/src/components/organisms/WalletInfo"
 
 function ProfileContent() {
   const { isConnected } = useAccount()
@@ -32,7 +32,7 @@ function ProfileContent() {
 
   return (
     <div className="space-y-6">
-      <WalletInfo />
+      <WalletDashboard />
       <UserProfile />
     </div>
   )

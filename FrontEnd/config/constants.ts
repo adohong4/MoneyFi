@@ -9,6 +9,7 @@ export const API_ENDPOINTS = {
   connectWallet: "/user/connectWallet",
   deposits: "/user/deposit",
   userInfor: "/user/infor",
+  userBalance: "/user/balance",
   withdrawals: "/api/withdrawals",
   stats: "/api/stats",
   leaderboard: "/api/leaderboard",

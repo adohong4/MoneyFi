@@ -13,5 +13,6 @@ router.post('/user/deposit', asyncHandler(UserController.userDeposit));
 router.get('/user/infor/:userAddress', asyncHandler(UserController.userInformation));
 router.get('/user/getAll', asyncHandler(UserController.getAllUserPagination));
 router.get('/user/search', asyncHandler(UserController.searchUserPagination));
+router.get('/user/balance/:userAddress', asyncHandler(UserController.userBalance));
 
 module.exports = router;

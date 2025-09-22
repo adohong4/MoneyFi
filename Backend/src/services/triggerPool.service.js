@@ -180,13 +180,13 @@ class TriggerPoolService {
                 // Sắp xếp pool theo điểm
                 scoredPools.sort((a, b) => b.totalScore - a.totalScore);
 
-                // Phân bổ tài sản (10% mỗi pool, tối đa 4 pool, tổng 40%)
-                const totalAmount = fundVaultBalance; // bigint
+                // Phân bổ tài sản (tối đa 4 pool, tổng 90%)
+                const totalAmount = amount; // bigint
                 const allocations = [
-                    totalAmount * 10n / 100n,
-                    totalAmount * 10n / 100n,
-                    totalAmount * 10n / 100n,
-                    totalAmount * 10n / 100n,
+                    totalAmount * 30n / 100n,
+                    totalAmount * 25n / 100n,
+                    totalAmount * 20n / 100n,
+                    totalAmount * 15n / 100n,
                 ];
 
                 // Gọi deposit cho tối đa 4 pool

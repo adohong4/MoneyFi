@@ -162,7 +162,7 @@ export class ContractService {
     }
   }
 
-  async withdrawUSDC(amount: number, userAddress: string): Promise<void> {
+  async withdrawUSDC(amount: number, userAddress: string, selectedPools: string[]): Promise<void> {
     try {
       console.log(`[v0] Withdrawing ${amount} USDC for ${userAddress}`)
 

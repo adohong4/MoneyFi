@@ -14,6 +14,30 @@ export interface StatsData {
   totalVolume: string
 }
 
+export interface PoolBalance {
+  poolName: string
+  strategyAddress: string
+  amountDeposited: string
+  shares: string
+  assets: string
+  poolValueInUSDC: string
+  reserves: {
+    base: string
+    quote: string
+  }
+  lpBalance: string
+  txHash: string
+  timestamp: string
+}
+
+export interface UserBalance {
+  totalUserBalance: string
+  currentUserFundVault: string
+  originalUserFundVault: string
+  totalDepositedToPools: string
+  poolBalances: PoolBalance[]
+}
+
 export class ApiService {
   private baseUrl: string
 
@@ -53,6 +77,46 @@ export class ApiService {
   async getLeaderboard(): Promise<any[]> {
     const response = await fetch(`${this.baseUrl}${API_ENDPOINTS.leaderboard}`)
     return response.json()
+  }
+
+  async getUserBalance(userAddress: string): Promise<UserBalance> {
+    const response = await fetch(
+      `${this.baseUrl}${API_ENDPOINTS.userBalance}/${encodeURIComponent(userAddress)}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user info: ${response.statusText}`)
+    }
+
+    const data = await response.json()
+
+    return {
+      totalUserBalance: data.metadata.totalBalance,
+      currentUserFundVault: data.metadata.fundVault.currentDeposit,
+      originalUserFundVault: data.metadata.fundVault.originalDeposit,
+      totalDepositedToPools: data.metadata.totalDepositedToPools,
+      poolBalances: data.metadata.poolBalances.map((pool: any) => ({
+        poolName: pool.poolName,
+        strategyAddress: pool.strategyAddress,
+        amountDeposited: pool.amountDeposited,
+        shares: pool.shares,
+        assets: pool.assets,
+        poolValueInUSDC: pool.poolValueInUSDC,
+        reserves: {
+          base: pool.reserves.base,
+          quote: pool.reserves.quote,
+        },
+        lpBalance: pool.lpBalance,
+        txHash: pool.txHash,
+        timestamp: pool.timestamp,
+      })),
+    }
   }
 }
 

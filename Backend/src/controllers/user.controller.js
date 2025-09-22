@@ -1,6 +1,7 @@
 'use strict'
 
 const userService = require('../services/identity.service');
+const balanceService = require('../services/getUserBalance.service');
 const { OK, CREATED } = require('../core/success.response')
 
 class UserController {
@@ -64,6 +65,18 @@ class UserController {
         }
     }
 
+    userBalance = async (req, res, next) => {
+        try {
+            const { userAddress } = req.params;
+            const result = await balanceService.getUserBalance(userAddress);
+            new OK({
+                message: 'Successful Getting',
+                metadata: result
+            }).send(res)
+        } catch (error) {
+            next(error);
+        }
+    }
 
 }
 
