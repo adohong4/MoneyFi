@@ -12,6 +12,7 @@ router.get('/trigger/status', asyncHandler(TriggerPoolController.checkStatus));
 
 // transaction
 router.get('/trigger/transaction', asyncHandler(TransactionController.getTransactionLog));
+router.get('/trigger/search', asyncHandler(TransactionController.searchTransaction));
 router.get('/trigger/amountPool/:userAddress', asyncHandler(TransactionController.totalAmountInPoolForUser));
 
 module.exports = router;

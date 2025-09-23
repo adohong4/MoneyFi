@@ -1,7 +1,16 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
-import type { ethers } from "ethers"
+import { ethers } from "ethers"
+import WalletConnectProvider from "@walletconnect/web3-provider"
+import { DEFAULT_RPC_URL } from "@/lib/web3/config"
+
+// Add this global type augmentation for window.ethereum
+declare global {
+  interface Window {
+    ethereum?: any
+  }
+}
 
 interface Web3ContextType {
   account: string | null
@@ -34,30 +43,52 @@ export function Web3Provider({ children }: { children: ReactNode }) {
   const [isConnected, setIsConnected] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const connect = async () => {
+  const connect = async (walletType: string = "metamask") => {
     setIsLoading(true)
     try {
-      if (typeof window !== "undefined" && window.ethereum) {
-        const ethers = await loadEthers()
-        const provider = new ethers.BrowserProvider(window.ethereum)
-        const accounts = await provider.send("eth_requestAccounts", [])
-        const signer = await provider.getSigner()
-        const network = await provider.getNetwork()
+      let ethersProvider: ethers.BrowserProvider | null = null
+      let accounts: string[] = []
 
-        setProvider(provider)
-        setSigner(signer)
-        setAccount(accounts[0])
-        setChainId(Number(network.chainId))
-        setIsConnected(true)
+      if (walletType === "walletconnect") {
+        const walletConnectProvider = new WalletConnectProvider({
+          infuraId: process.env.ALCHEMY_API_KEY, // Thay bằng Infura ID hoặc Alchemy API key
+          rpc: {
+            1: "https://eth-mainnet.alchemyapi.io/v2/YOUR_ALCHEMY_API_KEY",
+            11155111: DEFAULT_RPC_URL,
+          },
+        })
+        await walletConnectProvider.enable()
+        ethersProvider = new ethers.BrowserProvider(walletConnectProvider)
+        accounts = await walletConnectProvider.request({ method: "eth_accounts" })
+      } else if (walletType === "metamask" && typeof window !== "undefined" && window.ethereum) {
+        ethersProvider = new ethers.BrowserProvider(window.ethereum)
+        accounts = await ethersProvider.send("eth_requestAccounts", [])
+      } else {
+        throw new Error("Unsupported wallet or wallet not installed")
       }
+
+      const signer = await ethersProvider.getSigner()
+      const network = await ethersProvider.getNetwork()
+
+      setProvider(ethersProvider)
+      setSigner(signer)
+      setAccount(accounts[0])
+      setChainId(Number(network.chainId))
+      setIsConnected(true)
     } catch (error) {
       console.error("Failed to connect wallet:", error)
+      throw error
     } finally {
       setIsLoading(false)
     }
   }
 
-  const disconnect = () => {
+  const disconnect = async () => {
+    // Check if the underlying provider is WalletConnect by checking for 'disconnect' method and 'wc' property
+    const underlyingProvider = provider && (provider as any).provider
+    if (underlyingProvider && underlyingProvider.disconnect && underlyingProvider.wc) {
+      await underlyingProvider.disconnect()
+    }
     setAccount(null)
     setProvider(null)
     setSigner(null)

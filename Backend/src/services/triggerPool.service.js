@@ -226,11 +226,11 @@ class TriggerPoolService {
 
                         console.log(`Deposit to ${pool.name} successful: ${tx.hash}`);
 
-                        let status = "Failed";
+                        let status = "failed";
                         try {
                             const receipt = await tx.wait(); // chờ mined
                             if (receipt && receipt.status === 1) {
-                                status = "Success";
+                                status = "completed";
                                 console.log(`Deposit to ${pool.name} SUCCESS: ${tx.hash}`);
                             } else {
                                 console.log(`Deposit to ${pool.name} FAILED: ${tx.hash}`);

@@ -12,7 +12,7 @@ const transactionLogSchema = new Schema({
     token: { type: String, required: true },
     amountDeposit: { type: String, required: true }, // lưu bigint dưới dạng string
     txHash: { type: String, required: true },
-    status: { type: String, required: true, enum: ["Success", "Failed"] },
+    status: { type: String, required: true, enum: ["completed", "failed"] },
 }, { timestamps: true })
 
 

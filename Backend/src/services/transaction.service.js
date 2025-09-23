@@ -10,14 +10,70 @@ class TransactionLogService {
             const limit = parseInt(req.query.limit) || 10;
             const skip = (page - 1) * limit;
 
-            const transactions = await transactionLogModel.find({ status: "Success" })
+            const transactions = await transactionLogModel.find()
                 .sort({ timestamps: -1 })
                 .skip(skip)
                 .limit(limit)
                 .exec();
 
-            const totalTransactions = await transactionLogModel.countDocuments({ status: "Success" });
+            const totalTransactions = await transactionLogModel.countDocuments();
             const totalPages = Math.ceil(totalTransactions / limit);
+
+            return {
+                metadata: {
+                    transactions,
+                    currentPage: page,
+                    totalPages,
+                    totalTransactions,
+                    limit
+                }
+            };
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    static async searchTransaction(req, res) {
+        try {
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const skip = (page - 1) * limit;
+            const { query, status, type } = req.query;
+
+            // Xây dựng điều kiện tìm kiếm
+            const searchConditions = {};
+
+            // Tìm kiếm theo query (txHash, userAddress, hoặc poolName)
+            if (query) {
+                searchConditions.$or = [
+                    { txHash: { $regex: query, $options: 'i' } }, // Không phân biệt hoa thường
+                    { userAddress: { $regex: query, $options: 'i' } },
+                    { poolName: { $regex: query, $options: 'i' } }
+                ];
+            }
+
+            // Lọc theo status (nếu có)
+            if (status && status !== 'all') {
+                searchConditions.status = status;
+            }
+
+            // Lọc theo type (nếu có)
+            if (type && type !== 'all') {
+                searchConditions.type = { $regex: type, $options: 'i' }; // Hỗ trợ type như depositSameChain
+            }
+
+            // Tìm kiếm giao dịch
+            const transactions = await transactionLogModel.find(searchConditions)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .exec();
+
+            // Đếm số lượng bản ghi phù hợp
+            const totalTransactions = await transactionLogModel.countDocuments(searchConditions);
+
+            const totalPages = Math.ceil(totalTransactions / limit);
+
 
             return {
                 metadata: {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils/utils"
 import { Button } from "@/components/ui/button"
 import { EnhancedWalletConnect } from "@/components/enhanced-wallet-connect"
 import { ThemeToggle } from "@/components/theme-toggle"

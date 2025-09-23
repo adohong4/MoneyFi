@@ -42,5 +42,5 @@ export const TOKEN_ADDRESSES = {
 } as const
 
 export const DEFAULT_CHAIN_ID = SUPPORTED_CHAINS.SEPOLIA.chainId
-
+export const DEFAULT_RPC_URL = SUPPORTED_CHAINS.SEPOLIA.rpcUrl
 export const WALLET_CONNECT_PROJECT_ID = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || ""

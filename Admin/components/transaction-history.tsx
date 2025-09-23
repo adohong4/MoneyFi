@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,13 +10,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
   History,
   Search,
@@ -32,64 +32,10 @@ import {
   Activity,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { Pagination } from "@/components/pagination" // Added pagination import
+import { Pagination } from "@/components/pagination"
+import { TransactionAPI, TransactionData, Transaction } from "@/services/transaction.api"
 
-// Mock transaction data - expanded for pagination demo
-const generateMockTransactions = () => {
-  const types = ["deposit", "withdraw", "swap", "rebalance", "crosschain"]
-  const statuses = ["completed", "pending", "failed"]
-  const functions = [
-    "depositFund",
-    "withdrawFundSameChain",
-    "swapToken",
-    "rebalanceFundSameChain",
-    "depositFundToStrategyCrossChainFromOperator",
-    "withdrawFundCrossChain",
-  ]
-  const contracts = ["MoneyFiRouter", "MoneyFiUniSwap", "MoneyFiCrossChainRouter"]
-  const pools = ["USDC-ETH", "DAI-USDT", "WBTC-ETH", "USDT-USDC", "ETH-WBTC", "Cross-Chain Bridge"]
-
-  const transactions = []
-  for (let i = 1; i <= 500; i++) {
-    const type = types[Math.floor(Math.random() * types.length)]
-    const status = Math.random() > 0.85 ? (Math.random() > 0.5 ? "pending" : "failed") : "completed"
-
-    transactions.push({
-      id: i.toString(),
-      hash: `0x${Math.random().toString(16).substr(2, 64)}`,
-      type,
-      function: functions[Math.floor(Math.random() * functions.length)],
-      contract: contracts[Math.floor(Math.random() * contracts.length)],
-      user: Math.random() > 0.1 ? `0x${Math.random().toString(16).substr(2, 40)}` : "System",
-      amount: `${(Math.random() * 50000).toFixed(2)} ${["USDC", "DAI", "ETH", "USDT", "WBTC"][Math.floor(Math.random() * 5)]}`,
-      pool: pools[Math.floor(Math.random() * pools.length)],
-      status,
-      timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .replace("T", " ")
-        .substr(0, 19),
-      blockNumber: 19425000 + Math.floor(Math.random() * 1000),
-      gasUsed: `${Math.floor(Math.random() * 300000 + 21000).toLocaleString()}`,
-      gasPrice: `${(Math.random() * 50 + 10).toFixed(1)} gwei`,
-      gasFee: `${(Math.random() * 0.02).toFixed(5)} ETH`,
-      logs: ["Transfer", "Deposit", "Withdraw", "Swap", "PoolUpdate", "FeeCollection"].slice(
-        0,
-        Math.floor(Math.random() * 4) + 1,
-      ),
-      error:
-        status === "failed"
-          ? ["Insufficient liquidity", "Gas limit exceeded", "Slippage too high", "Contract paused"][
-              Math.floor(Math.random() * 4)
-            ]
-          : null,
-    })
-  }
-  return transactions
-}
-
-const mockTransactions = generateMockTransactions()
-
-// Mock system events
+// Mock system events (giữ nguyên)
 const mockSystemEvents = [
   {
     id: "1",
@@ -131,82 +77,63 @@ const mockSystemEvents = [
 
 export function TransactionHistory() {
   const { toast } = useToast()
-  const [transactions, setTransactions] = useState(mockTransactions)
-  const [systemEvents, setSystemEvents] = useState([
-    {
-      id: "1",
-      type: "config_change",
-      title: "Protocol Fee Updated",
-      description: "Protocol fee changed from 0.25% to 0.30%",
-      admin: "0xa1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
-      timestamp: "2024-03-15 14:35:00",
-      severity: "medium",
-    },
-    {
-      id: "2",
-      type: "emergency",
-      title: "Emergency Stop Activated",
-      description: "Emergency stop triggered for MoneyFiRouter due to suspicious activity",
-      admin: "0xb2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1",
-      timestamp: "2024-03-15 13:45:22",
-      severity: "high",
-    },
-    {
-      id: "3",
-      type: "pool_update",
-      title: "New Pool Added",
-      description: "WBTC-ETH pool has been added to the protocol",
-      admin: "0xa1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0",
-      timestamp: "2024-03-15 12:20:10",
-      severity: "low",
-    },
-    {
-      id: "4",
-      type: "user_action",
-      title: "Large Withdrawal Detected",
-      description: "User withdrew $500,000 worth of assets",
-      admin: "System",
-      timestamp: "2024-03-15 11:15:33",
-      severity: "medium",
-    },
-  ])
+  const [loading, setLoading] = useState(false)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [systemEvents] = useState(mockSystemEvents)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [typeFilter, setTypeFilter] = useState("all")
-  const [selectedTransaction, setSelectedTransaction] = useState<any>(null)
-
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(25)
+  const [pageSize, setPageSize] = useState(10)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalTransactions, setTotalTransactions] = useState(0)
 
-  const filteredTransactions = transactions.filter((tx) => {
-    const matchesSearch =
-      tx.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tx.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tx.function.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === "all" || tx.status === statusFilter
-    const matchesType = typeFilter === "all" || tx.type === typeFilter
-    return matchesSearch && matchesStatus && matchesType
-  })
+  // Khởi tạo TransactionAPI
+  const transactionApi = new TransactionAPI()
 
-  const totalPages = Math.ceil(filteredTransactions.length / pageSize)
-  const startIndex = (currentPage - 1) * pageSize
-  const paginatedTransactions = filteredTransactions.slice(startIndex, startIndex + pageSize)
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      setLoading(true)
+      try {
+        const params: { page?: number; limit?: number; query?: string; status?: string; type?: string } = {
+          page: currentPage,
+          limit: pageSize,
+        }
+        let transactionInfo: TransactionData
+        if (searchTerm || statusFilter !== "all" || typeFilter !== "all") {
+          // Tìm kiếm với các bộ lọc
+          transactionInfo = await transactionApi.searchTransactions({
+            query: searchTerm || undefined,
+            status: statusFilter !== "all" ? statusFilter : undefined,
+            type: typeFilter !== "all" ? typeFilter : undefined,
+          })
+        } else {
+          // Lấy danh sách giao dịch
+          transactionInfo = await transactionApi.getTransactions(params)
+        }
+        setTransactions(transactionInfo.metadata.transactions)
+        setTotalPages(transactionInfo.metadata.totalPages)
+        setTotalTransactions(transactionInfo.metadata.totalTransactions)
+      } catch (error) {
+        console.error("Error fetching transactions:", error)
+        toast({
+          title: "Error",
+          description: "Failed to fetch transactions. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTransactions()
+  }, [currentPage, pageSize, searchTerm, statusFilter, typeFilter])
 
   const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case "deposit":
-        return <ArrowDownLeft className="h-4 w-4 text-green-500" />
-      case "withdraw":
-        return <ArrowUpRight className="h-4 w-4 text-red-500" />
-      case "swap":
-        return <RefreshCw className="h-4 w-4 text-blue-500" />
-      case "rebalance":
-        return <TrendingUp className="h-4 w-4 text-purple-500" />
-      case "crosschain":
-        return <Activity className="h-4 w-4 text-orange-500" />
-      default:
-        return <Activity className="h-4 w-4 text-gray-500" />
-    }
+    if (type.includes("deposit")) return <ArrowDownLeft className="h-4 w-4 text-green-500" />
+    if (type.includes("rebalance")) return <RefreshCw className="h-4 w-4 text-purple-500" />
+    return <Activity className="h-4 w-4 text-gray-500" />
   }
 
   const getStatusBadge = (status: string) => {
@@ -248,6 +175,10 @@ export function TransactionHistory() {
     }
   }
 
+  const getExplorerUrl = (txHash: string) => {
+    return `https://sepolia.etherscan.io/tx/${txHash}`
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -259,7 +190,7 @@ export function TransactionHistory() {
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="gap-1">
             <History className="h-3 w-3" />
-            {transactions.length} Total Transactions
+            {totalTransactions} Total Transactions
           </Badge>
         </div>
       </div>
@@ -271,11 +202,7 @@ export function TransactionHistory() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Transactions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{transactions.length}</div>
-            <div className="text-xs text-green-500 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              +12% from yesterday
-            </div>
+            <div className="text-2xl font-bold">{totalTransactions}</div>
           </CardContent>
         </Card>
         <Card>
@@ -283,9 +210,16 @@ export function TransactionHistory() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Successful</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{transactions.filter((tx) => tx.status === "completed").length}</div>
+            <div className="text-2xl font-bold">
+              {transactions.filter((tx) => tx.status === "completed").length}
+            </div>
             <div className="text-xs text-muted-foreground">
-              {((transactions.filter((tx) => tx.status === "completed").length / transactions.length) * 100).toFixed(1)}
+              {totalTransactions > 0
+                ? (
+                  (transactions.filter((tx) => tx.status === "completed").length / totalTransactions) *
+                  100
+                ).toFixed(1)
+                : 0}
               % success rate
             </div>
           </CardContent>
@@ -304,13 +238,8 @@ export function TransactionHistory() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Gas Used (ETH)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {transactions
-                .slice(0, 100)
-                .reduce((sum, tx) => sum + Number.parseFloat(tx.gasFee.split(" ")[0]), 0)
-                .toFixed(4)}
-            </div>
-            <div className="text-xs text-muted-foreground">Total gas fees (sample)</div>
+            <div className="text-2xl font-bold">N/A</div>
+            <div className="text-xs text-muted-foreground">Gas data not available</div>
           </CardContent>
         </Card>
       </div>
@@ -336,11 +265,11 @@ export function TransactionHistory() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search by hash, user, or function..."
+                      placeholder="Search by hash, user, or pool..."
                       value={searchTerm}
                       onChange={(e) => {
                         setSearchTerm(e.target.value)
-                        setCurrentPage(1) // Reset to first page when searching
+                        setCurrentPage(1)
                       }}
                       className="pl-10"
                     />
@@ -350,7 +279,7 @@ export function TransactionHistory() {
                   value={statusFilter}
                   onValueChange={(value) => {
                     setStatusFilter(value)
-                    setCurrentPage(1) // Reset to first page when filtering
+                    setCurrentPage(1)
                   }}
                 >
                   <SelectTrigger className="w-[150px]">
@@ -367,7 +296,7 @@ export function TransactionHistory() {
                   value={typeFilter}
                   onValueChange={(value) => {
                     setTypeFilter(value)
-                    setCurrentPage(1) // Reset to first page when filtering
+                    setCurrentPage(1)
                   }}
                 >
                   <SelectTrigger className="w-[150px]">
@@ -376,10 +305,7 @@ export function TransactionHistory() {
                   <SelectContent>
                     <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="deposit">Deposit</SelectItem>
-                    <SelectItem value="withdraw">Withdraw</SelectItem>
-                    <SelectItem value="swap">Swap</SelectItem>
                     <SelectItem value="rebalance">Rebalance</SelectItem>
-                    <SelectItem value="crosschain">Cross Chain</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -391,8 +317,8 @@ export function TransactionHistory() {
                     <TableRow>
                       <TableHead>Type</TableHead>
                       <TableHead>Hash</TableHead>
-                      <TableHead>Function</TableHead>
                       <TableHead>User</TableHead>
+                      <TableHead>Pool</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Time</TableHead>
@@ -400,124 +326,111 @@ export function TransactionHistory() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedTransactions.map((tx) => (
-                      <TableRow key={tx.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {getTransactionIcon(tx.type)}
-                            <span className="capitalize">{tx.type}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {tx.hash.slice(0, 10)}...{tx.hash.slice(-8)}
-                        </TableCell>
-                        <TableCell className="font-medium">{tx.function}</TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {tx.user === "System" ? "System" : `${tx.user.slice(0, 6)}...${tx.user.slice(-4)}`}
-                        </TableCell>
-                        <TableCell className="font-medium">{tx.amount}</TableCell>
-                        <TableCell>{getStatusBadge(tx.status)}</TableCell>
-                        <TableCell className="text-muted-foreground">{tx.timestamp}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" onClick={() => setSelectedTransaction(tx)}>
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-4xl">
-                                <DialogHeader>
-                                  <DialogTitle>Transaction Details</DialogTitle>
-                                  <DialogDescription>Complete information for transaction {tx.hash}</DialogDescription>
-                                </DialogHeader>
-                                {selectedTransaction && (
-                                  <div className="grid grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                      <div>
-                                        <Label className="text-sm font-medium">Transaction Hash</Label>
-                                        <p className="font-mono text-sm break-all">{selectedTransaction.hash}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-medium">Type & Function</Label>
-                                        <div className="flex items-center gap-2">
-                                          {getTransactionIcon(selectedTransaction.type)}
-                                          <span className="capitalize">{selectedTransaction.type}</span>
-                                          <Badge variant="outline">{selectedTransaction.function}</Badge>
-                                        </div>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-medium">Contract</Label>
-                                        <p className="font-medium">{selectedTransaction.contract}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-medium">User</Label>
-                                        <p className="font-mono text-sm">{selectedTransaction.user}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-medium">Amount</Label>
-                                        <p className="font-medium">{selectedTransaction.amount}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-medium">Pool</Label>
-                                        <p className="font-medium">{selectedTransaction.pool}</p>
-                                      </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                      <div>
-                                        <Label className="text-sm font-medium">Status</Label>
-                                        <div>{getStatusBadge(selectedTransaction.status)}</div>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-medium">Block Number</Label>
-                                        <p className="font-mono">{selectedTransaction.blockNumber}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-medium">Gas Used</Label>
-                                        <p className="font-mono">{selectedTransaction.gasUsed}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-medium">Gas Price</Label>
-                                        <p className="font-mono">{selectedTransaction.gasPrice}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-medium">Gas Fee</Label>
-                                        <p className="font-mono">{selectedTransaction.gasFee}</p>
-                                      </div>
-                                      <div>
-                                        <Label className="text-sm font-medium">Timestamp</Label>
-                                        <p>{selectedTransaction.timestamp}</p>
-                                      </div>
-                                      {selectedTransaction.error && (
-                                        <div>
-                                          <Label className="text-sm font-medium">Error</Label>
-                                          <p className="text-red-500">{selectedTransaction.error}</p>
-                                        </div>
-                                      )}
-                                      <div>
-                                        <Label className="text-sm font-medium">Event Logs</Label>
-                                        <div className="flex flex-wrap gap-1">
-                                          {selectedTransaction.logs.map((log: string, index: number) => (
-                                            <Badge key={index} variant="outline" className="text-xs">
-                                              {log}
-                                            </Badge>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </DialogContent>
-                            </Dialog>
-                            <Button variant="ghost" size="sm" asChild>
-                              <a href={`https://etherscan.io/tx/${tx.hash}`} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="h-4 w-4" />
-                              </a>
-                            </Button>
-                          </div>
+                    {loading ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center">
+                          Loading transactions...
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : transactions.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center">
+                          No transactions found.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      transactions.map((tx) => (
+                        <TableRow key={tx._id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {getTransactionIcon(tx.type)}
+                              <span className="capitalize">{tx.type}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {tx.txHash.slice(0, 10)}...{tx.txHash.slice(-8)}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {tx.userAddress.slice(0, 6)}...{tx.userAddress.slice(-4)}
+                          </TableCell>
+                          <TableCell className="font-medium">{tx.poolName}</TableCell>
+                          <TableCell className="font-medium">{tx.amountDeposit}</TableCell>
+                          <TableCell>{getStatusBadge(tx.status)}</TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {new Date(tx.createdAt).toLocaleString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button variant="ghost" size="sm" onClick={() => setSelectedTransaction(tx)}>
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-4xl">
+                                  <DialogHeader>
+                                    <DialogTitle>Transaction Details</DialogTitle>
+                                    <DialogDescription>Complete information for transaction {tx.txHash}</DialogDescription>
+                                  </DialogHeader>
+                                  {selectedTransaction && (
+                                    <div className="grid grid-cols-2 gap-6">
+                                      <div className="space-y-4">
+                                        <div>
+                                          <Label className="text-sm font-medium">Transaction Hash</Label>
+                                          <p className="font-mono text-sm break-all">{selectedTransaction.txHash}</p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium">Type</Label>
+                                          <div className="flex items-center gap-2">
+                                            {getTransactionIcon(selectedTransaction.type)}
+                                            <span className="capitalize">{selectedTransaction.type}</span>
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium">Contract</Label>
+                                          <p className="font-mono text-sm">{selectedTransaction.strategyAddress}</p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium">User</Label>
+                                          <p className="font-mono text-sm">{selectedTransaction.userAddress}</p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium">Pool</Label>
+                                          <p className="font-medium">{selectedTransaction.poolName}</p>
+                                        </div>
+                                      </div>
+                                      <div className="space-y-4">
+                                        <div>
+                                          <Label className="text-sm font-medium">Status</Label>
+                                          <div>{getStatusBadge(selectedTransaction.status)}</div>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium">Amount</Label>
+                                          <p className="font-medium">{selectedTransaction.amountDeposit}</p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium">Token</Label>
+                                          <p className="font-mono text-sm">{selectedTransaction.token}</p>
+                                        </div>
+                                        <div>
+                                          <Label className="text-sm font-medium">Timestamp</Label>
+                                          <p>{new Date(selectedTransaction.createdAt).toLocaleString()}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </DialogContent>
+                              </Dialog>
+                              <Button variant="ghost" size="sm" asChild>
+                                <a href={getExplorerUrl(tx.txHash)} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="h-4 w-4" />
+                                </a>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -527,7 +440,7 @@ export function TransactionHistory() {
                   currentPage={currentPage}
                   totalPages={totalPages}
                   pageSize={pageSize}
-                  totalItems={filteredTransactions.length}
+                  totalItems={totalTransactions}
                   onPageChange={setCurrentPage}
                   onPageSizeChange={(newPageSize) => {
                     setPageSize(newPageSize)
@@ -583,16 +496,18 @@ export function TransactionHistory() {
               <CardContent>
                 <div className="space-y-3">
                   {transactions.slice(0, 5).map((tx) => (
-                    <div key={tx.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                    <div key={tx._id} className="flex items-center gap-3 p-3 rounded-lg border">
                       {getTransactionIcon(tx.type)}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-medium capitalize">{tx.type}</span>
                           {getStatusBadge(tx.status)}
                         </div>
-                        <p className="text-sm text-muted-foreground">{tx.amount}</p>
+                        <p className="text-sm text-muted-foreground">{tx.amountDeposit}</p>
                       </div>
-                      <div className="text-xs text-muted-foreground">{tx.timestamp.split(" ")[1]}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(tx.createdAt).toLocaleTimeString()}
+                      </div>
                     </div>
                   ))}
                 </div>
