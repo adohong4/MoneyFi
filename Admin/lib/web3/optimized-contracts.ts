@@ -4,10 +4,18 @@ export const loadContractABI = async (contractName: string) => {
   switch (contractName) {
     case "DefaultAccessControlEnumerable":
       return (await import("@/contracts/DefaultAccessControlEnumerable.json")).default
+    case "MoneyFiController":
+      return (await import("@/contracts/MoneyFiController.json")).default
     case "MoneyFiReferral":
       return (await import("@/contracts/MoneyFiReferral.json")).default
     case "MoneyFiFundVault":
       return (await import("@/contracts/MoneyFiFundVault.json")).default
+    case "MoneyFiRouter":
+      return (await import("@/contracts/MoneyFiRouter.json")).default
+    case "MoneyFiRouterCrossChain":
+      return (await import("@/contracts/MoneyFiCrossChainRouter.json")).default
+    case "MoneyFiStrategyUniswap":
+      return (await import("@/contracts/MoneyFiStrategyUpgradeableUniswap.json")).default
     default:
       throw new Error(`Unknown contract: ${contractName}`)
   }
