@@ -7,8 +7,9 @@ import { SystemConfig } from "@/components/system-config"
 import { FeeManagement } from "@/components/fee-management" // Added fee management import
 import { UserManagement } from "@/components/user-management"
 import { AdminManagement } from "@/components/admin-management"
-import { TransactionHistory } from "@/components/transaction-history"
+// import { TransactionHistory } from "@/components/transaction-history"
 import { PoolManagement } from "@/components/pool-management"
+import { TransactionHistory } from "@/components/transactions/TransactionHistory"
 
 export default function HomePage() {
   const [activeSection, setActiveSection] = useState("dashboard")

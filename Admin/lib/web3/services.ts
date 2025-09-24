@@ -165,6 +165,11 @@ export class Web3Service {
     return await controller.isAdmin(address)
   }
 
+  async isDelegateAdmin(address: string): Promise<boolean> {
+    const controller = getMoneyFiController(this.provider)
+    return await controller.isDelegateAdmin(address)
+  }
+
   async grantAdminRole(address: string): Promise<ethers.ContractTransactionResponse> {
     if (!this.signer) throw new Error("Signer required")
     const controller = getMoneyFiController(this.signer)

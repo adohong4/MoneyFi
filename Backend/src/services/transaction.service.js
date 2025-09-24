@@ -40,36 +40,30 @@ class TransactionLogService {
             const skip = (page - 1) * limit;
             const { query, status, type } = req.query;
 
-            // Xây dựng điều kiện tìm kiếm
             const searchConditions = {};
 
-            // Tìm kiếm theo query (txHash, userAddress, hoặc poolName)
             if (query) {
                 searchConditions.$or = [
-                    { txHash: { $regex: query, $options: 'i' } }, // Không phân biệt hoa thường
+                    { txHash: { $regex: query, $options: 'i' } },
                     { userAddress: { $regex: query, $options: 'i' } },
                     { poolName: { $regex: query, $options: 'i' } }
                 ];
             }
 
-            // Lọc theo status (nếu có)
             if (status && status !== 'all') {
                 searchConditions.status = status;
             }
 
-            // Lọc theo type (nếu có)
             if (type && type !== 'all') {
-                searchConditions.type = { $regex: type, $options: 'i' }; // Hỗ trợ type như depositSameChain
+                searchConditions.type = { $regex: type, $options: 'i' };
             }
 
-            // Tìm kiếm giao dịch
             const transactions = await transactionLogModel.find(searchConditions)
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
                 .exec();
 
-            // Đếm số lượng bản ghi phù hợp
             const totalTransactions = await transactionLogModel.countDocuments(searchConditions);
 
             const totalPages = Math.ceil(totalTransactions / limit);

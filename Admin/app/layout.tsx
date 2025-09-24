@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Web3Provider } from "@/components/web3-provider"
+import { WagmiProvider } from "wagmi"
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 

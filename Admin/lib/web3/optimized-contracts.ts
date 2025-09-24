@@ -47,7 +47,7 @@ export class OptimizedContractService {
 
     const [abi, { ethers }] = await Promise.all([loadContractABI(contractName), loadWeb3Utils()])
 
-    const contract = new ethers.Contract(address, abi, signer)
+    const contract = new ethers.Contract(address, abi.abi, signer)
     this.contractCache.set(cacheKey, contract)
 
     return contract
