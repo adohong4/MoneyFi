@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Transaction } from "@/services/transaction.api"
+import { Transaction } from "@/services/apis/transaction.api"
 import { TransactionFilters } from "./TransactionFilters"
 import { TransactionRow } from "./TransactionRow"
 import { Pagination } from "@/components/pagination"

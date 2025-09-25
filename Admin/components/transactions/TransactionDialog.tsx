@@ -3,7 +3,7 @@ import React, { useState } from 'react'; // Import useState
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Transaction } from "@/services/transaction.api" // Giả định interface Transaction của bạn
+import { Transaction } from "@/services/apis/transaction.api" // Giả định interface Transaction của bạn
 import { ArrowDownLeft, RefreshCw, Activity, ClipboardCopy, Check } from "lucide-react" // Thêm ClipboardCopy và Check
 import { Badge } from "@/components/ui/badge"
 import { Eye } from "lucide-react"

@@ -1,7 +1,7 @@
 // components/TransactionHistory/TransactionRow.tsx
 import { TableCell, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Transaction } from "@/services/transaction.api"
+import { Transaction } from "@/services/apis/transaction.api"
 import { ArrowDownLeft, RefreshCw, Activity, ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { TransactionDetailsDialog } from "./TransactionDialog"

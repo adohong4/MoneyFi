@@ -10,8 +10,10 @@ const poolSchema = new Schema({
     quoteToken: { type: String },
     baseToken: { type: String },
     chainId: { type: Number, default: 115511 },
+    pairAddress: { type: String },
     slippageWhenSwapAsset: { type: Number, default: true },
-    minimumSwapAmount: { type: Number, default: true }
+    minimumSwapAmount: { type: Number, default: true },
+    status: { type: String, enum: ['active', 'inactive'], default: 'active' }
 }, { timestamps: true })
 
 

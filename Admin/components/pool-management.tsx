@@ -206,9 +206,9 @@ export function PoolManagement() {
       pools.map((pool) =>
         pool.id === poolId
           ? {
-              ...pool,
-              status: action === "pause" ? "paused" : action === "activate" ? "active" : pool.status,
-            }
+            ...pool,
+            status: action === "pause" ? "paused" : action === "active" ? "active" : pool.status,
+          }
           : pool,
       ),
     )

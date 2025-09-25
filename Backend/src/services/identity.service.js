@@ -117,7 +117,7 @@ class AccountService {
                 .limit(limit)
                 .exec();
 
-            const totalUsers = await accountModel.countDocuments(filter);
+            const totalUsers = await users.countDocuments(filter);
             const totalPages = Math.ceil(totalUsers / limit);
 
             return {

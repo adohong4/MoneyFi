@@ -8,8 +8,9 @@ import { FeeManagement } from "@/components/fee-management" // Added fee managem
 import { UserManagement } from "@/components/user-management"
 import { AdminManagement } from "@/components/admin-management"
 // import { TransactionHistory } from "@/components/transaction-history"
-import { PoolManagement } from "@/components/pool-management"
+// import { PoolManagement } from "@/components/pool-management"
 import { TransactionHistory } from "@/components/transactions/TransactionHistory"
+import { PoolManagement } from "@/components/pool/PoolManagement"
 
 export default function HomePage() {
   const [activeSection, setActiveSection] = useState("dashboard")

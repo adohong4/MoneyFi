@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { TransactionAPI, TransactionData, Transaction } from "@/services/transaction.api"
+import { TransactionAPI, TransactionData, Transaction } from "@/services/apis/transaction.api"
 import { useToast } from "@/hooks/use-toast"
 import { Header } from "@/components/transactions/Header"
 import { StatsCards } from "@/components/transactions/StatsCards"

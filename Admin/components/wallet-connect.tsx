@@ -32,6 +32,7 @@ export function WalletConnect() {
 
   const getNetworkName = (chainId: number) => {
     const networks: { [key: number]: string } = {
+      115511: "Sepolia",
       1: "Ethereum",
       56: "BSC",
       137: "Polygon",

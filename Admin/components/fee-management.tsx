@@ -1,35 +1,36 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DollarSign,
   Percent,
   ArrowUpRight,
   ArrowDownRight,
-  LucidePieChart as RechartsPieChart,
   BarChart3,
-} from "lucide-react"
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  BarChart,
-  Bar,
-} from "recharts"
-import { Pie } from "recharts"
-import { Waves } from "lucide-react"
+  Waves,
+} from "lucide-react";
+import dynamic from "next/dynamic";
 
-// Mock fee data
+// Dynamic imports for recharts components to avoid SSR issues
+const LineChart = dynamic(() => import("recharts").then((mod) => mod.LineChart), { ssr: false });
+const BarChart = dynamic(() => import("recharts").then((mod) => mod.BarChart), { ssr: false });
+const PieChart = dynamic(() => import("recharts").then((mod) => mod.PieChart), { ssr: false });
+const ResponsiveContainer = dynamic(() => import("recharts").then((mod) => mod.ResponsiveContainer), { ssr: false });
+const Line = dynamic(() => import("recharts").then((mod) => mod.Line), { ssr: false });
+const Bar = dynamic(() => import("recharts").then((mod) => mod.Bar), { ssr: false });
+const Pie = dynamic(() => import("recharts").then((mod) => mod.Pie), { ssr: false });
+const XAxis = dynamic(() => import("recharts").then((mod) => mod.XAxis), { ssr: false });
+const YAxis = dynamic(() => import("recharts").then((mod) => mod.YAxis), { ssr: false });
+const CartesianGrid = dynamic(() => import("recharts").then((mod) => mod.CartesianGrid), { ssr: false });
+const Tooltip = dynamic(() => import("recharts").then((mod) => mod.Tooltip), { ssr: false });
+const Cell = dynamic(() => import("recharts").then((mod) => mod.Cell), { ssr: false });
+
+// Mock fee data (giữ nguyên như mã gốc)
 const feeStats = [
   {
     title: "Protocol Fee",
@@ -67,7 +68,7 @@ const feeStats = [
     collected: 2150.0,
     pending: 320.75,
   },
-]
+];
 
 const feeHistory = [
   { date: "Jan", protocol: 8500, rebalance: 2100, referral: 1200, crosschain: 1800 },
@@ -75,27 +76,27 @@ const feeHistory = [
   { date: "Mar", protocol: 10800, rebalance: 2800, referral: 1600, crosschain: 2100 },
   { date: "Apr", protocol: 11500, rebalance: 3000, referral: 1750, crosschain: 2050 },
   { date: "May", protocol: 12450, rebalance: 3280, referral: 1890, crosschain: 2150 },
-]
+];
 
 const feeDistribution = [
   { name: "Protocol Fee", value: 62.5, color: "#3b82f6" },
   { name: "Rebalance Fee", value: 16.5, color: "#10b981" },
   { name: "Cross-Chain Fee", value: 10.8, color: "#f59e0b" },
   { name: "Referral Fee", value: 9.5, color: "#ef4444" },
-]
+];
 
 const profitMargins = [
   { pool: "USDC-ETH", tvl: "$450K", fees: "$1,250", margin: "0.28%", apy: "12.5%" },
   { pool: "DAI-USDC", tvl: "$320K", fees: "$890", margin: "0.28%", apy: "10.2%" },
   { pool: "WBTC-ETH", tvl: "$280K", fees: "$780", margin: "0.28%", apy: "15.8%" },
   { pool: "USDT-DAI", tvl: "$180K", fees: "$520", margin: "0.29%", apy: "8.9%" },
-]
+];
 
 export function FeeManagement() {
-  const [selectedPeriod, setSelectedPeriod] = useState("30d")
+  const [selectedPeriod, setSelectedPeriod] = useState("30d");
 
-  const totalFees = feeStats.reduce((sum, fee) => sum + fee.collected, 0)
-  const totalPending = feeStats.reduce((sum, fee) => sum + fee.pending, 0)
+  const totalFees = feeStats.reduce((sum, fee) => sum + fee.collected, 0);
+  const totalPending = feeStats.reduce((sum, fee) => sum + fee.pending, 0);
 
   return (
     <div className="p-6 space-y-6">
@@ -158,18 +159,22 @@ export function FeeManagement() {
                 <CardDescription>Monthly fee collection across all categories</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <LineChart data={feeHistory}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`$${value}`, ""]} />
-                    <Line type="monotone" dataKey="protocol" stroke="#3b82f6" strokeWidth={2} />
-                    <Line type="monotone" dataKey="rebalance" stroke="#10b981" strokeWidth={2} />
-                    <Line type="monotone" dataKey="referral" stroke="#ef4444" strokeWidth={2} />
-                    <Line type="monotone" dataKey="crosschain" stroke="#f59e0b" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {feeHistory && feeHistory.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={feeHistory}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip formatter={(value) => [`$${value}`, ""]} />
+                      <Line type="monotone" dataKey="protocol" stroke="#3b82f6" strokeWidth={2} />
+                      <Line type="monotone" dataKey="rebalance" stroke="#10b981" strokeWidth={2} />
+                      <Line type="monotone" dataKey="referral" stroke="#ef4444" strokeWidth={2} />
+                      <Line type="monotone" dataKey="crosschain" stroke="#f59e0b" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div>Không có dữ liệu để hiển thị</div>
+                )}
               </CardContent>
             </Card>
 
@@ -205,18 +210,22 @@ export function FeeManagement() {
               <CardDescription>Detailed breakdown of fee collection over time</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={feeHistory}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip formatter={(value) => [`$${value}`, ""]} />
-                  <Bar dataKey="protocol" stackId="a" fill="#3b82f6" />
-                  <Bar dataKey="rebalance" stackId="a" fill="#10b981" />
-                  <Bar dataKey="referral" stackId="a" fill="#ef4444" />
-                  <Bar dataKey="crosschain" stackId="a" fill="#f59e0b" />
-                </BarChart>
-              </ResponsiveContainer>
+              {feeHistory && feeHistory.length > 0 ? (
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={feeHistory}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`$${value}`, ""]} />
+                    <Bar dataKey="protocol" stackId="a" fill="#3b82f6" />
+                    <Bar dataKey="rebalance" stackId="a" fill="#10b981" />
+                    <Bar dataKey="referral" stackId="a" fill="#ef4444" />
+                    <Bar dataKey="crosschain" stackId="a" fill="#f59e0b" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div>Không có dữ liệu để hiển thị</div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -230,24 +239,28 @@ export function FeeManagement() {
                 <CardDescription>Breakdown of fee types by percentage</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RechartsPieChart>
-                    <Pie
-                      data={feeDistribution}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={120}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {feeDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`${value}%`, ""]} />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                {feeDistribution && feeDistribution.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={feeDistribution}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={120}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {feeDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => [`${value}%`, ""]} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div>Không có dữ liệu để hiển thị</div>
+                )}
               </CardContent>
             </Card>
 
@@ -322,5 +335,5 @@ export function FeeManagement() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

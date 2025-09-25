@@ -29,6 +29,17 @@ class PoolController {
         }
     }
 
+    updatePool = async (req, res, next) => {
+        try {
+            const result = await PoolService.updatePools(req, res);
+            new OK({
+                message: 'Successful pool updating!',
+                metadata: result
+            }).send(res)
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 module.exports = new PoolController();

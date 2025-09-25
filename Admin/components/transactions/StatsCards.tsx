@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Transaction } from "@/services/transaction.api"
+import { Transaction } from "@/services/apis/transaction.api"
 
 export function StatsCards({
     transactions,

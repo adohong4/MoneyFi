@@ -1,6 +1,6 @@
 import { ArrowDownLeft, RefreshCw, Activity, AlertTriangle, TrendingUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Transaction } from "@/services/transaction.api"
+import { Transaction } from "@/services/apis/transaction.api"
 
 export const getTransactionIcon = (type: string) => {
     if (type.includes("deposit")) return <ArrowDownLeft className="h-4 w-4 text-green-500" />

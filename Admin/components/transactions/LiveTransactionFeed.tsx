@@ -1,6 +1,6 @@
 // components/TransactionHistory/LiveTransactionFeed.tsx
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Transaction } from "@/services/transaction.api"
+import { Transaction } from "@/services/apis/transaction.api"
 import { Activity, ArrowDownLeft, RefreshCw } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
