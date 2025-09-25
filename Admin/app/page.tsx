@@ -5,12 +5,13 @@ import { Sidebar } from "@/components/sidebar"
 import { Dashboard } from "@/components/dashboard"
 import { SystemConfig } from "@/components/system-config"
 import { FeeManagement } from "@/components/fee-management" // Added fee management import
-import { UserManagement } from "@/components/user-management"
+// import { UserManagement } from "@/components/user-management"
 import { AdminManagement } from "@/components/admin-management"
 // import { TransactionHistory } from "@/components/transaction-history"
 // import { PoolManagement } from "@/components/pool-management"
 import { TransactionHistory } from "@/components/transactions/TransactionHistory"
 import { PoolManagement } from "@/components/pool/PoolManagement"
+import { UserManagement } from "@/components/user/UserManagement"
 
 export default function HomePage() {
   const [activeSection, setActiveSection] = useState("dashboard")

@@ -71,13 +71,13 @@ class AccountService {
             const limit = parseInt(req.query.limit) || 10;
             const skip = (page - 1) * limit;
 
-            const users = await accountModel.find({ isActive: true })
+            const users = await accountModel.find()
                 .sort({ balance: -1 })
                 .skip(skip)
                 .limit(limit)
                 .exec();
 
-            const totalUser = await accountModel.countDocuments({ isActive: true });
+            const totalUser = await accountModel.countDocuments();
             const totalPages = Math.ceil(totalUser / limit);
 
             return {

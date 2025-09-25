@@ -69,7 +69,9 @@ export function PoolTable({ pools, tvlData, onPoolAction, formatCurrency }: Pool
                                     </div>
                                 </div>
                             </TableCell>
-                            <TableCell className="font-mono text-sm">{pool.strategyAddress}</TableCell>
+                            <TableCell className="font-mono text-sm">
+                                {pool.strategyAddress.slice(0, 10)}...{pool.strategyAddress.slice(-8)}
+                            </TableCell>
                             <TableCell>{pool.chainId}</TableCell>
                             <TableCell>{pool.slippageWhenSwapAsset.toFixed(2)}%</TableCell>
                             <TableCell>{pool.minimumSwapAmount}</TableCell>
