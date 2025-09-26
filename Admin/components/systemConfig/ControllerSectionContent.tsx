@@ -10,59 +10,21 @@ interface ControllerSectionContentProps {
     controllerSection: string
     isConnected: boolean
     loading: string | null
-    handleConfigAction: (actionName: string, params: any) => void
 }
 
 export function ControllerSectionContent({
     controllerSection,
     isConnected,
     loading,
-    handleConfigAction,
 }: ControllerSectionContentProps) {
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {controllerSection === "protocol" && (
-                <ProtocolSection
-                    isConnected={isConnected}
-                    loading={loading}
-                    handleConfigAction={handleConfigAction}
-                />
-            )}
-            {controllerSection === "token" && (
-                <TokenSection
-                    isConnected={isConnected}
-                    loading={loading}
-                    handleConfigAction={handleConfigAction}
-                />
-            )}
-            {controllerSection === "strategy" && (
-                <StrategySection
-                    isConnected={isConnected}
-                    loading={loading}
-                    handleConfigAction={handleConfigAction}
-                />
-            )}
-            {controllerSection === "router" && (
-                <RouterSection
-                    isConnected={isConnected}
-                    loading={loading}
-                    handleConfigAction={handleConfigAction}
-                />
-            )}
-            {controllerSection === "check" && (
-                <CheckSection
-                    isConnected={isConnected}
-                    loading={loading}
-                    handleConfigAction={handleConfigAction}
-                />
-            )}
-            {controllerSection === "admin" && (
-                <AdminSection
-                    isConnected={isConnected}
-                    loading={loading}
-                    handleConfigAction={handleConfigAction}
-                />
-            )}
+        <div className="w-4xl max-w-5xl mx-auto grid grid-cols-1 gap-6">
+            {controllerSection === "protocol" && <ProtocolSection isConnected={isConnected} loading={loading} />}
+            {controllerSection === "token" && <TokenSection isConnected={isConnected} loading={loading} />}
+            {controllerSection === "strategy" && <StrategySection isConnected={isConnected} loading={loading} />}
+            {controllerSection === "router" && <RouterSection isConnected={isConnected} loading={loading} />}
+            {controllerSection === "check" && <CheckSection isConnected={isConnected} loading={loading} />}
+            {controllerSection === "admin" && <AdminSection isConnected={isConnected} loading={loading} />}
         </div>
     )
 }

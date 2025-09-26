@@ -61,6 +61,7 @@ export function AdminSection({ isConnected, loading: externalLoading }: AdminSec
             })
 
             // Call the createAdmin API
+
             const adminInput: AdminInput = { userAddress, role: selectedRole }
             await adminAPI.createAdmin(adminInput)
 
@@ -77,39 +78,6 @@ export function AdminSection({ isConnected, loading: externalLoading }: AdminSec
             toast({
                 title: "Operation Failed",
                 description: "Failed to grant role or create admin. Please try again.",
-                variant: "destructive",
-            })
-        } finally {
-            setLocalLoading(null)
-        }
-    }
-
-    // Handle pause/unpause actions
-    const handleEmergencyAction = async (action: "pause" | "unpause") => {
-        if (!isConnected) {
-            toast({
-                title: "Wallet Not Connected",
-                description: "Please connect your wallet to perform this action.",
-                variant: "destructive",
-            })
-            return
-        }
-
-        setLocalLoading(action)
-        try {
-            const contract = await controllerContract.getControllerContract()
-            const tx = await (action === "pause" ? contract.pause() : contract.unpause())
-            await tx.wait()
-
-            toast({
-                title: "Transaction Successful",
-                description: `${action.charAt(0).toUpperCase() + action.slice(1)} executed successfully.`,
-            })
-        } catch (error) {
-            console.error(`Error executing ${action}:`, error)
-            toast({
-                title: "Transaction Failed",
-                description: `Failed to execute ${action}. Please try again.`,
                 variant: "destructive",
             })
         } finally {
@@ -158,39 +126,6 @@ export function AdminSection({ isConnected, loading: externalLoading }: AdminSec
                         </Button>
                     </div>
                 </div>
-
-                {/* Emergency Controls */}
-                {/* <div className="space-y-2">
-                    <Label>Emergency Controls</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                        <Button
-                            onClick={() => handleEmergencyAction("pause")}
-                            disabled={localLoading !== null || !isConnected}
-                            variant="destructive"
-                            className="gap-2"
-                        >
-                            {localLoading === "pause" ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <AlertTriangle className="h-4 w-4" />
-                            )}
-                            Pause
-                        </Button>
-                        <Button
-                            onClick={() => handleEmergencyAction("unpause")}
-                            disabled={localLoading !== null || !isConnected}
-                            variant="outline"
-                            className="gap-2"
-                        >
-                            {localLoading === "unpause" ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <CheckCircle className="h-4 w-4" />
-                            )}
-                            Unpause
-                        </Button>
-                    </div>
-                </div> */}
             </CardContent>
         </Card>
     )

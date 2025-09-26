@@ -1,29 +1,72 @@
 // components/system-config/controller-sections/ProtocolSection.tsx
+"use client"
+
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Settings, RefreshCw, CheckCircle, XCircle } from "lucide-react"
+import { RefreshCw, CheckCircle, XCircle } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { useWeb3 } from "@/components/web3-provider"
+import { ControllerContract } from "@/services/contracts/controllerContract"
 import { InputWithButton } from "../InputWithButton"
 
 interface ProtocolSectionProps {
     isConnected: boolean
     loading: string | null
-    handleConfigAction: (actionName: string, params: any) => void
 }
 
-export function ProtocolSection({ isConnected, loading, handleConfigAction }: ProtocolSectionProps) {
+export function ProtocolSection({ isConnected }: ProtocolSectionProps) {
+    const { toast } = useToast()
+    const { provider } = useWeb3()
+    const [localLoading, setLocalLoading] = useState<string | null>(null)
+    const controllerContract = new ControllerContract(provider ?? undefined)
+
+    const handleEnableReferralSignature = async (enabled: boolean, actionName: string) => {
+        if (!isConnected) {
+            toast({
+                title: "Ví chưa được kết nối",
+                description: "Vui lòng kết nối ví để thực hiện hành động này.",
+                variant: "destructive",
+            })
+            return
+        }
+
+        setLocalLoading(actionName)
+        try {
+            const tx = await controllerContract.setEnableReferralSignature(enabled)
+            await tx.wait()
+
+            toast({
+                title: "Giao dịch thành công",
+                description: enabled
+                    ? "Đã bật chữ ký giới thiệu."
+                    : "Đã tắt chữ ký giới thiệu.",
+            })
+        } catch (error) {
+            console.error(`Lỗi khi thực hiện ${actionName}:`, error)
+            toast({
+                title: "Giao dịch thất bại",
+                description: `Không thể thực hiện ${actionName}. Vui lòng thử lại.`,
+                variant: "destructive",
+            })
+        } finally {
+            setLocalLoading(null)
+        }
+    }
+
     return (
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    Protocol Fee Settings
+                    <CheckCircle className="h-5 w-5" />
+                    Cấu hình phí giao thức
                 </CardTitle>
-                <CardDescription>Configure protocol fees and referral settings</CardDescription>
+                <CardDescription>Cấu hình phí giao thức và cài đặt giới thiệu</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <InputWithButton
-                    label="Protocol Fee (%)"
+                    label="Phí giao thức (%)"
                     placeholder="0.3"
                     actionName="setProtocolFee"
                     type="number"
@@ -31,11 +74,38 @@ export function ProtocolSection({ isConnected, loading, handleConfigAction }: Pr
                     min="0"
                     max="100"
                     isConnected={isConnected}
-                    loading={loading}
-                    handleConfigAction={handleConfigAction}
+                    loading={localLoading}
+                    handleConfigAction={async (actionName, { value }) => {
+                        if (!isConnected) {
+                            toast({
+                                title: "Ví chưa được kết nối",
+                                description: "Vui lòng kết nối ví để thực hiện hành động này.",
+                                variant: "destructive",
+                            })
+                            return
+                        }
+                        setLocalLoading(actionName)
+                        try {
+                            const tx = await controllerContract.setProtocolFee(parseFloat(value))
+                            await tx.wait()
+                            toast({
+                                title: "Giao dịch thành công",
+                                description: `Đã đặt phí giao thức thành ${value}%.`,
+                            })
+                        } catch (error) {
+                            console.error(`Lỗi khi thực hiện ${actionName}:`, error)
+                            toast({
+                                title: "Giao dịch thất bại",
+                                description: `Không thể đặt phí giao thức. Vui lòng thử lại.`,
+                                variant: "destructive",
+                            })
+                        } finally {
+                            setLocalLoading(null)
+                        }
+                    }}
                 />
                 <InputWithButton
-                    label="Referral Fee (%)"
+                    label="Phí giới thiệu (%)"
                     placeholder="0.1"
                     actionName="setReferralFee"
                     type="number"
@@ -43,37 +113,64 @@ export function ProtocolSection({ isConnected, loading, handleConfigAction }: Pr
                     min="0"
                     max="100"
                     isConnected={isConnected}
-                    loading={loading}
-                    handleConfigAction={handleConfigAction}
+                    loading={localLoading}
+                    handleConfigAction={async (actionName, { value }) => {
+                        if (!isConnected) {
+                            toast({
+                                title: "Ví chưa được kết nối",
+                                description: "Vui lòng kết nối ví để thực hiện hành động này.",
+                                variant: "destructive",
+                            })
+                            return
+                        }
+                        setLocalLoading(actionName)
+                        try {
+                            const tx = await controllerContract.setReferralFee(parseFloat(value))
+                            await tx.wait()
+                            toast({
+                                title: "Giao dịch thành công",
+                                description: `Đã đặt phí giới thiệu thành ${value}%.`,
+                            })
+                        } catch (error) {
+                            console.error(`Lỗi khi thực hiện ${actionName}:`, error)
+                            toast({
+                                title: "Giao dịch thất bại",
+                                description: `Không thể đặt phí giới thiệu. Vui lòng thử lại.`,
+                                variant: "destructive",
+                            })
+                        } finally {
+                            setLocalLoading(null)
+                        }
+                    }}
                 />
                 <div className="space-y-2">
-                    <Label>Enable Referral Signature</Label>
+                    <Label>Bật/Tắt chữ ký giới thiệu</Label>
                     <div className="flex gap-2">
                         <Button
-                            onClick={() => handleConfigAction("setEnableReferralSignature", { enabled: true })}
-                            disabled={loading !== null || !isConnected}
+                            onClick={() => handleEnableReferralSignature(true, "setEnableReferralSignature")}
+                            disabled={localLoading !== null || !isConnected}
                             variant="outline"
                             className="flex-1 gap-2"
                         >
-                            {loading === "setEnableReferralSignature" ? (
+                            {localLoading === "setEnableReferralSignature" ? (
                                 <RefreshCw className="h-4 w-4 animate-spin" />
                             ) : (
                                 <CheckCircle className="h-4 w-4" />
                             )}
-                            Enable
+                            Bật
                         </Button>
                         <Button
-                            onClick={() => handleConfigAction("setEnableReferralSignature", { enabled: false })}
-                            disabled={loading !== null || !isConnected}
+                            onClick={() => handleEnableReferralSignature(false, "setEnableReferralSignature")}
+                            disabled={localLoading !== null || !isConnected}
                             variant="outline"
                             className="flex-1 gap-2"
                         >
-                            {loading === "setEnableReferralSignature" ? (
+                            {localLoading === "setEnableReferralSignature" ? (
                                 <RefreshCw className="h-4 w-4 animate-spin" />
                             ) : (
                                 <XCircle className="h-4 w-4" />
                             )}
-                            Disable
+                            Tắt
                         </Button>
                     </div>
                 </div>
