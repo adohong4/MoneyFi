@@ -26,7 +26,7 @@ export interface PoolData {
     createdAt: string;
     updatedAt: string;
     feeWhenSwapAsset: number;
-    tvl?: number; // Thêm để lưu TVL từ contract
+    tvl?: number;
 }
 
 export class PoolAPI {
@@ -36,7 +36,7 @@ export class PoolAPI {
         this.baseUrl = URL;
     }
 
-    async AddPool(PoolInput: PoolInput): Promise<any> {
+    async AddPool(PoolInput: PoolInput): Promise<{ metadata: PoolData[] }> {
         const response = await fetch(`${this.baseUrl}${POOL_API_ENDPOINTS.poolAdd}`, {
             method: "POST",
             headers: {
@@ -44,6 +44,9 @@ export class PoolAPI {
             },
             body: JSON.stringify(PoolInput),
         });
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
         return response.json();
     }
 
@@ -55,20 +58,18 @@ export class PoolAPI {
                     "Content-Type": "application/json",
                 },
             });
-
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-
             const data = await response.json();
-            return data.metadata; // Trả về mảng PoolData
+            return data.metadata;
         } catch (error) {
             console.error("Failed to fetch pools:", error);
             throw error;
         }
     }
 
-    async PoolStatus(id: string, status: string): Promise<any> {
+    async PoolStatus(id: string, status: string): Promise<void> {
         const response = await fetch(`${this.baseUrl}${POOL_API_ENDPOINTS.poolUpdate}/${encodeURIComponent(id)}`, {
             method: "POST",
             headers: {
@@ -76,17 +77,23 @@ export class PoolAPI {
             },
             body: JSON.stringify({ status }),
         });
-        return response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
     }
 
-    async UpdatePool(id: string, PoolInput: Partial<PoolInput>): Promise<any> {
+    async UpdatePool(id: string, PoolInput: Partial<PoolInput>): Promise<PoolData> {
         const response = await fetch(`${this.baseUrl}${POOL_API_ENDPOINTS.poolUpdate}/${encodeURIComponent(id)}`, {
-            method: "POST",
+            method: "POST", // Sửa thành PUT để đúng chuẩn REST
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(PoolInput), // Sửa lỗi: bỏ { PoolInput }
+            body: JSON.stringify(PoolInput),
         });
-        return response.json();
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.metadata[0];
     }
 }

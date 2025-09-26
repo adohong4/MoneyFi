@@ -5,11 +5,12 @@ import { PoolData } from "@/lib/api/PoolAPI";
 
 interface PoolDetailsDialogProps {
     pool: PoolData | null;
+    tvl?: number; // Thêm prop tvl
     formatCurrency: (amount: number) => string;
     getStatusBadge: (status: string) => JSX.Element;
 }
 
-export function PoolDetailsDialog({ pool, formatCurrency, getStatusBadge }: PoolDetailsDialogProps) {
+export function PoolDetailsDialog({ pool, tvl, formatCurrency, getStatusBadge }: PoolDetailsDialogProps) {
     if (!pool) return null;
 
     return (
@@ -60,7 +61,7 @@ export function PoolDetailsDialog({ pool, formatCurrency, getStatusBadge }: Pool
                     </div>
                     <div>
                         <Label className="text-sm font-medium">Total Value Locked</Label>
-                        <p className="text-2xl font-bold">{formatCurrency(pool.tvl || 0)}</p>
+                        <p className="text-2xl font-bold">{tvl !== undefined ? formatCurrency(tvl) : "Loading..."}</p>
                     </div>
                     <div>
                         <Label className="text-sm font-medium">Status</Label>

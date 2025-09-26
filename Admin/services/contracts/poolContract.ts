@@ -30,7 +30,7 @@ export class PoolContract {
         return this.signer;
     }
 
-    async getStrategyContract({ poolAddress }: { poolAddress: string }, useSigner: boolean = false) {
+    async getStrategyContract({ poolAddress, useSigner }: { poolAddress: string; useSigner?: boolean }) {
         if (!this.provider) {
             throw new Error("No Ethereum provider found. Please install MetaMask.");
         }
@@ -44,7 +44,7 @@ export class PoolContract {
         const signerOrProvider = useSigner ? await this.getSigner() : this.provider;
         if (!this.contract || this.contract.target !== poolAddress) {
             this.contract = new ethers.Contract(poolAddress, CONTRACT_ABI.MONEYFI_STRATEGY, signerOrProvider);
-            this.baseTokenDecimals = null; // Reset decimals khi contract thay đổi
+            this.baseTokenDecimals = null;
         }
     }
 
@@ -65,7 +65,7 @@ export class PoolContract {
             const tokenContract = new ethers.Contract(
                 baseTokenAddress,
                 ["function decimals() view returns (uint8)"],
-                this.provider // Dùng provider thay vì signer
+                this.provider
             );
             const decimals = await tokenContract.decimals();
             this.baseTokenDecimals = Number(decimals);

@@ -47,15 +47,15 @@ async function main() {
     // console.log("Set HotWallet address:", deployer.address);
 
     // 6. Set Strategy Internal (Uniswap Strategy)
-    await moneyFiController.connect(deployer).setStrategyInternal(
-        "0xcc6c99b5450344005fdd5487ef52c952b8bbc535",
-        {
-            name: "UNI_LINK_Inactive",
-            chainId: 11155111,
-            isActive: true,
-        }
-    );
-    console.log("Set StrategyInternal for Uniswap Strategy");
+    // await moneyFiController.connect(deployer).setStrategyInternal(
+    //     "0xcc6c99b5450344005fdd5487ef52c952b8bbc535",
+    //     {
+    //         name: "UNI_LINK_Inactive",
+    //         chainId: 11155111,
+    //         isActive: true,
+    //     }
+    // );
+    // console.log("Set StrategyInternal for Uniswap Strategy");
 
     // // 8. Set Referral Fee (ví dụ: 10% của protocol fee)
     // const referralFee = ethers.parseUnits("100", 0); // 1% (100/10000)
@@ -85,7 +85,7 @@ async function main() {
     // console.log("\nVerifying configurations...");
     // const tokenInfo = await moneyFiController.getSupportedTokenInternalInfor(USDC_ADDRESS);
     // console.log("Token Info for USDC:", tokenInfo);
-    const isStrategyActive = await moneyFiController.isStrategyInternalActive(addresses.UniswapV2_UNI_LINK);
+    const isStrategyActive = await moneyFiController.isStrategyInternalActive(addresses.UniswapV2_USDC_LINK);
     console.log("Is Uniswap Strategy Active:", isStrategyActive);
     // const routerAddress = await moneyFiController.router();
     // console.log("Router address:", routerAddress);

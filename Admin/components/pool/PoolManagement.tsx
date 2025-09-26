@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
+import { ethers } from "ethers";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,14 +9,15 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Waves, Plus, TrendingUp, CheckCircle, Pause, AlertTriangle } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Waves, Plus, CheckCircle, Pause, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { PoolAPI, PoolData } from "@/services/apis/pools.api";
-import { PoolContract } from "@/services/contracts/poolContract";
-import { StatsCards } from "./StatsCards"; // Import StatsCards
+import { PoolData } from "@/lib/api/PoolAPI";
+import { PoolAPI } from "@/services/apis/pools.api";
 import { PoolTable } from "./PoolTable";
-import { ethers } from "ethers";
+import { CreatePoolDialog } from "./CreatePoolDialog";
+import { PoolContract } from "@/services/contracts/poolContract";
+import { StatsCards } from "./StatsCards";
 
 export function PoolManagement() {
     const { toast } = useToast();
@@ -23,16 +25,16 @@ export function PoolManagement() {
     const [tvlData, setTvlData] = useState<{ [key: string]: number }>({});
     const [newPool, setNewPool] = useState({
         name: "",
-        token0: "",
-        token1: "",
+        tokenBase: "",
+        tokenQuote: "",
         pairAddress: "",
-        strategy: "",
+        chainId: "",
         slippage: "",
         minSwapAmount: "",
+        strategyAddress: "",
     });
     const poolAPI = new PoolAPI();
 
-    // Hàm format tiền tệ
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat("en-US", {
             style: "currency",
@@ -42,15 +44,12 @@ export function PoolManagement() {
         }).format(amount);
     };
 
-    // Lấy danh sách pool và TVL từ API
     useEffect(() => {
         const fetchPoolsAndTVLs = async () => {
             try {
-                // Lấy danh sách pool
                 const data = await poolAPI.GetPool();
                 setPools(data);
 
-                // Fetch TVL cho từng pool
                 const tvls: { [key: string]: number } = {};
                 const poolContract = new PoolContract();
                 for (const pool of data) {
@@ -92,9 +91,8 @@ export function PoolManagement() {
         fetchPoolsAndTVLs();
     }, [toast]);
 
-    // Xử lý tạo pool mới
     const handleCreatePool = async () => {
-        if (!newPool.name || !newPool.token0 || !newPool.token1 || !newPool.pairAddress || !newPool.strategy) {
+        if (!newPool.name || !newPool.tokenBase || !newPool.tokenQuote || !newPool.pairAddress || !newPool.chainId) {
             toast({ title: "Error", description: "Please fill in all required fields.", variant: "destructive" });
             return;
         }
@@ -103,11 +101,11 @@ export function PoolManagement() {
             const poolInput: PoolData = {
                 _id: "",
                 name: newPool.name,
-                strategyAddress: `0x${Math.random().toString(16).substr(2, 40)}`, // Placeholder - cần sửa
-                baseToken: newPool.token0,
-                quoteToken: newPool.token1,
+                strategyAddress: newPool.strategyAddress,
+                baseToken: newPool.tokenBase,
+                quoteToken: newPool.tokenQuote,
                 pairAddress: newPool.pairAddress,
-                chainId: 11155111,
+                chainId: Number.parseInt(newPool.chainId) || 11155111,
                 slippageWhenSwapAsset: Number.parseFloat(newPool.slippage) || 0.5,
                 minimumSwapAmount: Number.parseFloat(newPool.minSwapAmount) || 100,
                 status: "active",
@@ -117,28 +115,29 @@ export function PoolManagement() {
             };
 
             const response = await poolAPI.AddPool(poolInput);
-            setPools([...pools, response.metadata[0]]);
-            setNewPool({ name: "", token0: "", token1: "", pairAddress: "", strategy: "", slippage: "", minSwapAmount: "" });
+            const newPoolData = response.metadata;
+            console.log("New pool data from API:", newPoolData); // Debug response
+
+            setPools([...pools]);
+            setNewPool({
+                name: "",
+                strategyAddress: "",
+                tokenBase: "",
+                tokenQuote: "",
+                pairAddress: "",
+                chainId: "",
+                slippage: "",
+                minSwapAmount: "",
+            });
             toast({ title: "Pool Created", description: `${newPool.name} pool has been created successfully.` });
         } catch (error) {
+            console.error("Failed to create pool:", error);
             toast({ title: "Error", description: "Failed to create pool.", variant: "destructive" });
-        }
-    };
-
-    // Xử lý action pause/activate
-    const handlePoolAction = async (poolId: string, action: string) => {
-        try {
-            await poolAPI.PoolStatus(poolId, action);
-            setPools(pools.map((pool) => (pool._id === poolId ? { ...pool, status: action } : pool)));
-            toast({ title: "Pool Updated", description: `Pool has been ${action}d successfully.` });
-        } catch (error) {
-            toast({ title: "Error", description: `Failed to ${action} pool.`, variant: "destructive" });
         }
     };
 
     return (
         <div className="p-6 space-y-6">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold text-balance">Pool Management</h1>
@@ -156,103 +155,15 @@ export function PoolManagement() {
                                 Create Pool
                             </Button>
                         </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Create New Pool</DialogTitle>
-                                <DialogDescription>Add a new liquidity pool to the protocol</DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="poolName">Pool Name *</Label>
-                                    <Input
-                                        id="poolName"
-                                        placeholder="e.g., USDC-ETH"
-                                        value={newPool.name}
-                                        onChange={(e) => setNewPool({ ...newPool, name: e.target.value })}
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="token0">Token 0 *</Label>
-                                        <Input
-                                            id="token0"
-                                            placeholder="e.g., USDC address"
-                                            value={newPool.token0}
-                                            onChange={(e) => setNewPool({ ...newPool, token0: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="token1">Token 1 *</Label>
-                                        <Input
-                                            id="token1"
-                                            placeholder="e.g., ETH address"
-                                            value={newPool.token1}
-                                            onChange={(e) => setNewPool({ ...newPool, token1: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="pairAddress">Pair Address *</Label>
-                                    <Input
-                                        id="pairAddress"
-                                        placeholder="e.g., Uniswap pair address"
-                                        value={newPool.pairAddress}
-                                        onChange={(e) => setNewPool({ ...newPool, pairAddress: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="strategy">Strategy *</Label>
-                                    <Select
-                                        value={newPool.strategy}
-                                        onValueChange={(value) => setNewPool({ ...newPool, strategy: value })}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select strategy" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="UniswapV2">Uniswap V2</SelectItem>
-                                            <SelectItem value="UniswapV3">Uniswap V3</SelectItem>
-                                            <SelectItem value="Curve">Curve</SelectItem>
-                                            <SelectItem value="Balancer">Balancer</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="slippage">Slippage (%)</Label>
-                                        <Input
-                                            id="slippage"
-                                            type="number"
-                                            placeholder="0.5"
-                                            step="0.1"
-                                            value={newPool.slippage}
-                                            onChange={(e) => setNewPool({ ...newPool, slippage: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="minSwap">Min Swap</Label>
-                                        <Input
-                                            id="minSwap"
-                                            type="number"
-                                            placeholder="100"
-                                            value={newPool.minSwapAmount}
-                                            onChange={(e) => setNewPool({ ...newPool, minSwapAmount: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="flex justify-end gap-2">
-                                    <Button variant="outline" onClick={() => setNewPool({ name: "", token0: "", token1: "", pairAddress: "", strategy: "", slippage: "", minSwapAmount: "" })}>
-                                        Cancel
-                                    </Button>
-                                    <Button onClick={handleCreatePool}>Create Pool</Button>
-                                </div>
-                            </div>
-                        </DialogContent>
+                        <CreatePoolDialog
+                            setNewPool={setNewPool}
+                            newPool={newPool}
+                            handleCreatePool={handleCreatePool}
+                        />
                     </Dialog>
                 </div>
             </div>
 
-            {/* Stats Cards */}
             <StatsCards pools={pools} tvlData={tvlData} formatCurrency={formatCurrency} />
 
             <Tabs defaultValue="overview" className="space-y-6">
@@ -271,7 +182,7 @@ export function PoolManagement() {
                         <CardContent>
                             <PoolTable
                                 pools={pools}
-                                onPoolAction={handlePoolAction}
+                                setPools={setPools}
                                 tvlData={tvlData}
                                 formatCurrency={formatCurrency}
                             />

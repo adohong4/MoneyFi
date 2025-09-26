@@ -78,10 +78,11 @@ export function Sidebar({ className, activeSection, onSectionChange }: SidebarPr
       <div className="p-4 border-t border-sidebar-border space-y-3">
         {!collapsed && (
           <>
-            <EnhancedWalletConnect />
+
             <div className="flex justify-center">
               <ThemeToggle />
             </div>
+            <EnhancedWalletConnect />
           </>
         )}
         {collapsed && (

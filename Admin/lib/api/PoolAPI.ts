@@ -18,5 +18,5 @@ export interface PoolData {
     utilization?: number;
     totalUsers?: number;
     lastRebalance?: string;
-    pairAddress?: string;
+    pairAddress: string;
 }
