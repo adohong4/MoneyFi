@@ -44,4 +44,12 @@ export class ControllerContract {
 
         return await controllerContract.setStrategyInternal(addresss, Strategy);
     }
+
+    async setGrantRole(addresss: string, role: string) {
+        const controllerContract = await this.getControllerContract();
+        return await controllerContract.grantRole(role, addresss);
+    }
+
+
+
 }

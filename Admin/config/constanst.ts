@@ -17,3 +17,9 @@ export const USER_API_ENDPOINTS = {
     userInfor: "/user/infor",
     search: "/user/search",
 }
+
+export const ADMIN_API_ENDPOINTS = {
+    adminCreate: "/admin/create",
+    adminGet: "/admin/get",
+    adminPut: "/admin/update",
+}
